@@ -1,0 +1,50 @@
+[1mdiff --cc package.json[m
+[1mindex 0ea0018,6953557..0000000[m
+[1m--- a/package.json[m
+[1m+++ b/package.json[m
+[36m@@@ -1,35 -1,15 +1,43 @@@[m
+  {[m
+[31m -  "name": "zakatcompanion",[m
+[32m +  "name": "alkhidmatzakat",[m
+[32m +  "main": "node_modules/expo/AppEntry.js",[m
+    "version": "1.0.0",[m
+[31m -  "main": "index.js",[m
+    "dependencies": {[m
+[32m++<<<<<<< HEAD[m
+[32m +    "@expo/ui": "~57.0.16",[m
+[32m++=======[m
+[32m+     "@expo/vector-icons": "^15.0.2",[m
+[32m++>>>>>>> feature/tracking-history[m
+      "expo": "~57.0.20",[m
+[32m +    "expo-constants": "~57.0.17",[m
+[32m +    "expo-device": "~57.0.1",[m
+[32m +    "expo-font": "~57.0.3",[m
+[32m +    "expo-glass-effect": "~57.0.1",[m
+[32m +    "expo-image": "~57.0.4",[m
+[32m +    "expo-linking": "~57.0.9",[m
+[32m +    "expo-router": "~57.0.19",[m
+[32m +    "expo-splash-screen": "~57.0.8",[m
+      "expo-status-bar": "~57.0.1",[m
+[32m +    "expo-symbols": "~57.0.2",[m
+[32m +    "expo-system-ui": "~57.0.3",[m
+[32m +    "expo-web-browser": "~57.0.2",[m
+      "react": "19.2.3",[m
+      "react-dom": "19.2.3",[m
+      "react-native": "0.86.3",[m
+[32m++<<<<<<< HEAD[m
+[32m +    "react-native-gesture-handler": "~2.32.0",[m
+[32m +    "react-native-reanimated": "4.5.1",[m
+[32m +    "react-native-safe-area-context": "~5.7.0",[m
+[32m +    "react-native-screens": "~4.26.0",[m
+[32m +    "react-native-web": "~0.21.0",[m
+[32m +    "react-native-worklets": "0.10.1"[m
+[32m +  },[m
+[32m +  "devDependencies": {[m
+[32m +    "@types/react": "~19.2.2",[m
+[32m +    "typescript": "~6.0.3"[m
+[32m++=======[m
+[32m+     "react-native-web": "^0.21.2"[m
+[32m++>>>>>>> feature/tracking-history[m
+    },[m
+    "scripts": {[m
+      "start": "expo start",[m
