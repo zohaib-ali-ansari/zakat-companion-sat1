@@ -1,6 +1,4 @@
-import React from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomNavigation } from '../components/BottomNavigation';
 import { Header } from '../components/Header';
 import { mockRecords } from '../data/mockRecords';
 import { colors } from '../theme/colors';
@@ -10,18 +8,13 @@ const formatAmount = (amount) => `$${amount.toLocaleString('en-US', {
   maximumFractionDigits: 2,
 })}`;
 
-const navigateToTab = (navigation, tab) => {
-  const routes = { track: 'Track', history: 'History' };
-  navigation?.navigate(routes[tab] || tab);
-};
-
-export default function TrackingScreen({ navigation }) {
+export default function TrackingScreen({ onOpenSettings, onAddPayment }) {
   const { hijriYear, totalDue, totalPaid, remaining, nisabDate, percentPaid } = mockRecords;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.screen}>
-        <Header />
+        <Header onOpenSettings={onOpenSettings} />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.titleBlock}>
             <Text style={styles.title}>Track</Text>
@@ -58,7 +51,7 @@ export default function TrackingScreen({ navigation }) {
 
           <Pressable
             style={({ pressed }) => [styles.paymentButton, pressed && styles.paymentButtonPressed]}
-            onPress={() => navigation?.navigate('AddPaymentScreen')}
+            onPress={() => onAddPayment?.()}
             accessibilityRole="button"
             accessibilityLabel="Add payment"
           >
@@ -66,7 +59,6 @@ export default function TrackingScreen({ navigation }) {
           </Pressable>
         </ScrollView>
 
-        <BottomNavigation activeTab="track" onSelectTab={(tab) => navigateToTab(navigation, tab)} />
       </View>
     </SafeAreaView>
   );

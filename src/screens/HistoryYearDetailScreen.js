@@ -1,15 +1,13 @@
-import React from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomNavigation } from '../components/BottomNavigation';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { mockRecords } from '../data/mockRecords';
 import { colors } from '../theme/colors';
 
 const getYear = (date) => date.match(/\d{4}/)?.[0] || 'Other';
 const formatAmount = (amount) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export default function HistoryYearDetailScreen({ navigation, route }) {
-  const year = String(route?.params?.year || '');
+export default function HistoryYearDetailScreen({ year: yearProp, onBack }) {
+  const year = String(yearProp || '');
   const records = mockRecords.records.filter((record) => getYear(record.date) === year);
   const total = records.reduce((sum, record) => sum + record.amount, 0);
 
@@ -17,7 +15,7 @@ export default function HistoryYearDetailScreen({ navigation, route }) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.screen}>
         <View style={styles.topBar}>
-          <Pressable onPress={() => navigation?.navigate('History')} accessibilityLabel="Back to history">
+          <Pressable onPress={() => onBack?.()} accessibilityLabel="Back to history">
             <Ionicons name="arrow-back" size={32} color={colors.primaryDark} />
           </Pressable>
           <View style={styles.topTitle}>
@@ -52,14 +50,7 @@ export default function HistoryYearDetailScreen({ navigation, route }) {
               <Text style={styles.totalAmount}>{formatAmount(total)}</Text>
             </View>
           </View>
-          <Pressable style={styles.recordsLink} onPress={() => navigation?.navigate('HistoryRecords')}>
-            <Text style={styles.recordsLinkText}>VIEW ALL PAYMENTS</Text>
-          </Pressable>
         </ScrollView>
-        <BottomNavigation
-          activeTab="history"
-          onSelectTab={(tab) => navigation?.navigate(tab === 'history' ? 'History' : 'Track')}
-        />
       </View>
     </SafeAreaView>
   );

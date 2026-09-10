@@ -1,6 +1,4 @@
-import React from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomNavigation } from '../components/BottomNavigation';
 import { Header } from '../components/Header';
 import HistoryYearCard from '../components/HistoryYearCard';
 import { mockRecords } from '../data/mockRecords';
@@ -20,28 +18,24 @@ const yearlySummaries = Object.entries(
   .map(([, summary]) => summary)
   .sort((first, second) => Number(second.year) - Number(first.year));
 
-export default function HistoryScreen({ navigation }) {
+export default function HistoryScreen({ onOpenSettings, onOpenYearDetail, onOpenAllRecords }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.screen}>
-        <Header />
+        <Header onOpenSettings={onOpenSettings} />
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
           <Text style={styles.title}>Past Years{`\n`}History</Text>
           {yearlySummaries.map((summary) => (
             <HistoryYearCard
               key={summary.year}
               {...summary}
-              onPress={() => navigation?.navigate('HistoryYearDetail', { year: summary.year })}
+              onPress={() => onOpenYearDetail?.(summary.year)}
             />
           ))}
-          <Pressable style={styles.recordsLink} onPress={() => navigation?.navigate('HistoryRecords')}>
+          <Pressable style={styles.recordsLink} onPress={() => onOpenAllRecords?.()}>
             <Text style={styles.recordsLinkText}>VIEW ALL PAYMENTS</Text>
           </Pressable>
         </ScrollView>
-        <BottomNavigation
-          activeTab="history"
-          onSelectTab={(tab) => navigation?.navigate(tab === 'history' ? 'History' : 'Track')}
-        />
       </View>
     </SafeAreaView>
   );

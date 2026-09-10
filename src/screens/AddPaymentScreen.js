@@ -1,13 +1,12 @@
-import React from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
 import { colors } from '../theme/colors';
 
-export default function AddPaymentScreen({ navigation }) {
+export default function AddPaymentScreen({ onBack }) {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Add Payment</Text>
       <Text style={styles.subtitle}>Record a payment toward your Zakat obligation.</Text>
-      <Pressable style={styles.button} onPress={() => navigation?.navigate('Track')}>
+      <Pressable style={styles.button} onPress={() => onBack?.()}>
         <Text style={styles.buttonText}>BACK TO TRACK</Text>
       </Pressable>
     </SafeAreaView>

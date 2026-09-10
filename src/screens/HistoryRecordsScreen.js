@@ -1,7 +1,5 @@
-import React from 'react';
-import { SafeAreaView, SectionList, StyleSheet, Text, View } from 'react-native';
-import { BottomNavigation } from '../components/BottomNavigation';
-import { Header } from '../components/Header';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { mockRecords } from '../data/mockRecords';
 import { colors } from '../theme/colors';
 
@@ -17,11 +15,19 @@ const sections = Object.entries(mockRecords.records.reduce((groups, record) => {
   .map(([title, data]) => ({ title, data }))
   .sort((first, second) => Number(second.title) - Number(first.title));
 
-export default function HistoryRecordsScreen({ navigation }) {
+export default function HistoryRecordsScreen({ onBack, onOpenSettings }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.screen}>
-        <Header />
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => onBack?.()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.primaryDark} />
+          </TouchableOpacity>
+          <Text style={styles.topTitle}>All Payments</Text>
+          <TouchableOpacity onPress={() => onOpenSettings?.()} style={styles.menuButton}>
+            <Ionicons name="menu-outline" size={24} color={colors.primaryDark} />
+          </TouchableOpacity>
+        </View>
         <SectionList
           sections={sections}
           keyExtractor={(item) => item.id}
@@ -45,10 +51,6 @@ export default function HistoryRecordsScreen({ navigation }) {
             </View>
           )}
         />
-        <BottomNavigation
-          activeTab="history"
-          onSelectTab={(tab) => navigation?.navigate(tab === 'history' ? 'History' : 'Track')}
-        />
       </View>
     </SafeAreaView>
   );
@@ -57,6 +59,33 @@ export default function HistoryRecordsScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   screen: { flex: 1, backgroundColor: colors.background },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 12,
+  },
+  backButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topTitle: {
+    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '800',
+  },
   content: { paddingBottom: 18 },
   title: { color: colors.textPrimary, fontSize: 52, lineHeight: 62, fontWeight: '800', paddingHorizontal: 24, paddingTop: 42, paddingBottom: 58 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 24, paddingHorizontal: 24, marginBottom: 38 },
