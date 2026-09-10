@@ -1,16 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import {
-  FlatList,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useMemo, useState } from 'react';
+import {
+    FlatList,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
 const GUIDANCE_TOPICS = [
