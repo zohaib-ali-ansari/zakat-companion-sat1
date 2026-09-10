@@ -13,8 +13,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
 
-// Mock data for the Zakat Guidance feature.
-// This will later be replaced by real content from the backend/CMS.
 const GUIDANCE_TOPICS = [
   {
     id: 'what-is-zakat',
@@ -131,7 +129,7 @@ const SECTIONS = [
 ];
 
 export const ZakatGuidanceScreen = ({ onBack }) => {
-  const { t, themeColors } = useLanguage();
+  const { t, themeColors, isRTL } = useLanguage();
   const [query, setQuery] = useState('');
   const [selectedTopic, setSelectedTopic] = useState(null);
 
@@ -146,7 +144,27 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
 
   const isSearching = query.trim().length > 0;
 
-  // ---------- Detail view ----------
+  const guidanceItems = [
+    {
+      q: isRTL ? 'زکوٰۃ کس پر فرض ہے؟' : 'Who is obligated to pay Zakat?',
+      a: isRTL
+        ? 'ہر اس عاقل اور بالغ مسلمان پر زکوٰۃ فرض ہے جس کے پاس نصاب کی مقدار کے برابر یا اس سے زائد اثاثے ایک سال سے موجود ہوں۔'
+        : 'Zakat is mandatory on any sane, adult Muslim who owns wealth meeting or exceeding the Nisab threshold for one full lunar year (Hawl).',
+    },
+    {
+      q: isRTL ? 'نصاب کا کیا مطلب ہے؟' : 'What is Nisab?',
+      a: isRTL
+        ? 'نصاب وہ کم از کم شرعی حد ہے جس پر زکوٰۃ لاگو ہوتی ہے۔ سونا: 7.5 تولے (87.48 گرام) اور چاندی: 52.5 تولے (612.36 گرام)۔'
+        : 'Nisab is the minimum threshold of wealth that makes Zakat obligatory. It equals 52.5 Tolas (612.36g) of Silver or 7.5 Tolas (87.48g) of Gold.',
+    },
+    {
+      q: isRTL ? 'کن اثاثوں پر زکوٰۃ ادا کرنی ہوگی؟' : 'Which assets are subject to Zakat?',
+      a: isRTL
+        ? 'سونا، چاندی، نقد رقم، بینک ڈیپازٹس، شیئرز، میوچل فنڈز، اور تجارتی مال پر زکوٰۃ عائد ہوتی ہے۔'
+        : 'Subject assets include Gold, Silver, Cash in Hand & Bank, Investments, Stocks, Rental Revenue, and Commercial Trade Merchandise.',
+    },
+  ];
+
   if (selectedTopic) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -155,7 +173,8 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
           <TouchableOpacity
             style={styles.backBtn}
             onPress={() => setSelectedTopic(null)}
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+          >
             <Ionicons name="arrow-back" size={22} color={themeColors.primary} />
             <Text style={[styles.backText, { color: themeColors.primary }]}>Back</Text>
           </TouchableOpacity>
@@ -175,13 +194,13 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
     );
   }
 
-  // ---------- List view ----------
   const renderRow = (item) => (
     <TouchableOpacity
       key={item.id}
       style={[styles.row, { borderBottomColor: themeColors.border }]}
       onPress={() => setSelectedTopic(item)}
-      activeOpacity={0.6}>
+      activeOpacity={0.6}
+    >
       <View style={{ flex: 1 }}>
         <Text style={[styles.rowTitle, { color: themeColors.textPrimary }]}>{item.title}</Text>
         <Text style={[styles.rowSummary, { color: themeColors.textMuted }]} numberOfLines={1}>
@@ -201,9 +220,7 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
           <Ionicons name="arrow-back" size={22} color={themeColors.primary} />
           <Text style={[styles.backText, { color: themeColors.primary }]}>{t('backBtn')}</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: themeColors.textPrimary }]}>
-          {t('zakatGuidanceTitle')}
-        </Text>
+        <Text style={[styles.headerTitle, { color: themeColors.textPrimary }]}>{t('zakatGuidanceTitle')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -225,9 +242,7 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
           renderItem={({ item }) => renderRow(item)}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
-              No topics match your search.
-            </Text>
+            <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>No topics match your search.</Text>
           }
         />
       ) : (
@@ -244,6 +259,21 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
               </View>
             );
           })}
+
+          <View style={[styles.faqSection, { borderColor: themeColors.border }]}>
+            {guidanceItems.map((item, idx) => (
+              <View
+                key={idx}
+                style={[styles.faqCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
+              >
+                <View style={styles.qRow}>
+                  <Ionicons name="help-circle" size={22} color={themeColors.primary} />
+                  <Text style={[styles.qText, { color: themeColors.textPrimary }]}>{item.q}</Text>
+                </View>
+                <Text style={[styles.aText, { color: themeColors.textSecondary }]}>{item.a}</Text>
+              </View>
+            ))}
+          </View>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -289,4 +319,9 @@ const styles = StyleSheet.create({
   emptyText: { marginTop: 24, textAlign: 'center' },
   detailContent: { padding: 20, gap: 14 },
   paragraph: { fontSize: 15, lineHeight: 24 },
+  faqSection: { marginTop: 24, gap: 12, borderTopWidth: 1, paddingTop: 16 },
+  faqCard: { padding: 18, borderRadius: 18, borderWidth: 1 },
+  qRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  qText: { fontSize: 16, fontWeight: '800', flex: 1 },
+  aText: { fontSize: 14, lineHeight: 22 },
 });
