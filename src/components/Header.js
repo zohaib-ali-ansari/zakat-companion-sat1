@@ -1,32 +1,28 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 export const Header = ({ onOpenSettings }) => {
+  const { t, isRTL, language, themeColors } = useLanguage();
+
   return (
-    <View style={styles.headerContainer}>
-      <TouchableOpacity 
-        style={styles.avatarBadge}
+    <View style={[styles.headerContainer, { backgroundColor: themeColors.background }, isRTL && styles.rtlContainer]}>
+      <TouchableOpacity
+        style={[styles.avatarBadge, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}
         onPress={onOpenSettings}
         activeOpacity={0.8}
       >
-        <Ionicons name="apps" size={25} color={colors.textPrimary} />
+        <Text style={[styles.avatarText, { color: themeColors.primary }]}>{language.toUpperCase()}</Text>
       </TouchableOpacity>
 
-      <View style={styles.brandArea}>
-        <View style={styles.brandMark}>
-          <Ionicons name="sparkles-outline" size={18} color={colors.primary} />
-        </View>
-        <Text style={styles.title}>Zakat Companion</Text>
-      </View>
+      <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('appTitle')}</Text>
 
-      <TouchableOpacity 
-        style={styles.languageButton}
+      <TouchableOpacity
+        style={[styles.iconButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
         onPress={onOpenSettings}
         activeOpacity={0.7}
       >
-        <Text style={styles.languageText}>UR</Text>
+        <Ionicons name="menu-outline" size={26} color={themeColors.textPrimary} />
       </TouchableOpacity>
     </View>
   );
@@ -37,47 +33,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 96,
-    paddingHorizontal: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  rtlContainer: {
+    flexDirection: 'row-reverse',
   },
   avatarBadge: {
-    width: 34,
+    width: 42,
     height: 42,
+    borderRadius: 21,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brandArea: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 12,
-    gap: 14,
-  },
-  brandMark: {
-    width: 46,
-    height: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primaryLight,
+  avatarText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   title: {
-    color: colors.textPrimary,
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
-  languageButton: {
-    minWidth: 52,
-    paddingVertical: 7,
+  iconButton: {
+    padding: 6,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  languageText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '700',
   },
 });

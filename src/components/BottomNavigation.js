@@ -1,20 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 
 export const BottomNavigation = ({ activeTab, onSelectTab }) => {
+  const { t, isRTL, themeColors } = useLanguage();
+
   const tabs = [
-    { id: 'home', label: 'Home', iconOutline: 'home-outline', iconFilled: 'home' },
-    { id: 'calculator', label: 'Calculator', iconOutline: 'calculator-outline', iconFilled: 'calculator' },
-    { id: 'track', label: 'Track', iconOutline: 'stats-chart-outline', iconFilled: 'stats-chart' },
-    { id: 'history', label: 'History', iconOutline: 'time-outline', iconFilled: 'time' },
-    { id: 'assistant', label: 'Assistant', iconOutline: 'hardware-chip-outline', iconFilled: 'hardware-chip' },
+    { id: 'home', labelKey: 'navHome', iconOutline: 'home-outline', iconFilled: 'home' },
+    { id: 'calculator', labelKey: 'navCalculator', iconOutline: 'calculator-outline', iconFilled: 'calculator' },
+    { id: 'track', labelKey: 'navTrack', iconOutline: 'stats-chart-outline', iconFilled: 'stats-chart' },
+    { id: 'history', labelKey: 'navHistory', iconOutline: 'time-outline', iconFilled: 'time' },
+    { id: 'assistant', labelKey: 'navAssistant', iconOutline: 'hardware-chip-outline', iconFilled: 'hardware-chip' },
   ];
 
+  const displayTabs = isRTL ? [...tabs].reverse() : tabs;
+
   return (
-    <View style={styles.container}>
-      {tabs.map((tab) => {
+    <View style={[styles.container, { backgroundColor: themeColors.cardBg, borderTopColor: themeColors.border }]}>
+      {displayTabs.map((tab) => {
         const isActive = activeTab === tab.id;
         const iconName = isActive ? tab.iconFilled : tab.iconOutline;
 
@@ -28,17 +31,17 @@ export const BottomNavigation = ({ activeTab, onSelectTab }) => {
             <Ionicons
               name={iconName}
               size={24}
-              color={isActive ? colors.primary : colors.textMuted}
+              color={isActive ? themeColors.primary : themeColors.textMuted}
             />
             <Text
               style={[
                 styles.tabLabel,
-                { color: isActive ? colors.primary : colors.textMuted },
+                { color: isActive ? themeColors.primary : themeColors.textMuted },
                 isActive && styles.activeTabLabel,
               ]}
               numberOfLines={1}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </Text>
           </TouchableOpacity>
         );
