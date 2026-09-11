@@ -1,12 +1,23 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 export const Header = ({ onOpenSettings }) => {
   const { t, isRTL, language, isDarkMode, toggleDarkMode, themeColors } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.headerContainer, { backgroundColor: themeColors.background }, isRTL && styles.rtlContainer]}>
+    <View
+      style={[
+        styles.headerContainer,
+        {
+          backgroundColor: themeColors.background,
+          paddingTop: Math.max(insets.top + 6, 16),
+        },
+        isRTL && styles.rtlContainer,
+      ]}
+    >
       {/* Profile option button on left */}
       <TouchableOpacity
         style={[styles.avatarBadge, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}

@@ -71,6 +71,51 @@ export const ZakatProvider = ({ children }) => {
     return true;
   };
 
+  const editPayment = (id, { date, amount, recipient, notes }) => {
+    const numericAmount = parseFloat(amount) || 0;
+    if (!id || numericAmount <= 0 || !recipient?.trim()) {
+      return false;
+    }
+
+    setRecords((prev) =>
+      prev.map((rec) =>
+        rec.id === id
+          ? {
+              ...rec,
+              date: date?.trim() || rec.date,
+              amount: numericAmount,
+              recipient: recipient.trim(),
+              notes: notes?.trim() || '',
+            }
+          : rec
+      )
+    );
+    return true;
+  };
+
+  const deletePayment = (id) => {
+    if (!id) return false;
+    setRecords((prev) => prev.filter((rec) => rec.id !== id));
+    return true;
+  };
+
+  const deleteYearHistory = (yearStr) => {
+    if (!yearStr) return false;
+    const targetYear = String(yearStr);
+    setRecords((prev) =>
+      prev.filter((rec) => {
+        const recYear = rec.date ? (rec.date.match(/\d{4}/) || [])[0] : 'Other';
+        return recYear !== targetYear;
+      })
+    );
+    return true;
+  };
+
+  const archiveZakatCycle = (yearStr = '2024') => {
+    // If total due is paid or completed, ensure existing payments stay locked in past history
+    return true;
+  };
+
   const updateTotalDue = (newAmount) => {
     const val = parseFloat(newAmount) || 0;
     if (val > 0) {
@@ -89,6 +134,10 @@ export const ZakatProvider = ({ children }) => {
         hijriYear,
         nisabDate,
         addPayment,
+        editPayment,
+        deletePayment,
+        deleteYearHistory,
+        archiveZakatCycle,
         updateTotalDue,
       }}
     >

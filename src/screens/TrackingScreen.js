@@ -1,10 +1,12 @@
 import React from 'react';
 import {
+  Alert,
   Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   StatusBar,
 } from 'react-native';
@@ -17,7 +19,22 @@ const formatCurrency = (amount) => `PKR ${Number(amount || 0).toLocaleString('en
 
 export default function TrackingScreen({ onOpenSettings, onAddPayment }) {
   const { t, isRTL, themeColors } = useLanguage();
-  const { hijriYear, totalDue, totalPaid, remaining, nisabDate, percentPaid, records } = useZakat();
+  const { hijriYear, totalDue, totalPaid, remaining, nisabDate, percentPaid, records, deletePayment } = useZakat();
+
+  const handleDelete = (id) => {
+    Alert.alert(
+      t('appTitle'),
+      t('confirmDeletePayment'),
+      [
+        { text: t('cancelBtn'), style: 'cancel' },
+        {
+          text: t('deletePayment'),
+          style: 'destructive',
+          onPress: () => deletePayment(id),
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
@@ -111,9 +128,28 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment }) {
                       {item.date} {item.notes ? `• ${item.notes}` : ''}
                     </Text>
                   </View>
+
                   <Text style={[styles.amountText, { color: themeColors.primary }]}>
                     {formatCurrency(item.amount)}
                   </Text>
+
+                  {/* Edit and Delete Actions */}
+                  <View style={[styles.cardActions, isRTL && styles.rtlRow]}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: themeColors.primaryLight }]}
+                      onPress={() => onAddPayment?.(item)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="pencil" size={16} color={themeColors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: themeColors.cardBgAlt }]}
+                      onPress={() => handleDelete(item.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={themeColors.danger} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))
             ) : (
@@ -251,5 +287,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 10,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 4,
+  },
+  actionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

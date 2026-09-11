@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 
 export const BottomNavigation = ({ activeTab, onSelectTab }) => {
-  const { t, isRTL, themeColors } = useLanguage();
+  const { t, themeColors } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   const tabs = [
     { id: 'home', labelKey: 'navHome', iconOutline: 'home-outline', iconFilled: 'home' },
@@ -13,11 +15,21 @@ export const BottomNavigation = ({ activeTab, onSelectTab }) => {
     { id: 'assistant', labelKey: 'navAssistant', iconOutline: 'hardware-chip-outline', iconFilled: 'hardware-chip' },
   ];
 
-  const displayTabs = isRTL ? [...tabs].reverse() : tabs;
+  const bottomInset = Math.max(insets.bottom, 10);
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.cardBg, borderTopColor: themeColors.border }]}>
-      {displayTabs.map((tab) => {
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: themeColors.cardBg,
+          borderTopColor: themeColors.border,
+          paddingBottom: bottomInset,
+          height: 60 + bottomInset,
+        },
+      ]}
+    >
+      {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         const iconName = isActive ? tab.iconFilled : tab.iconOutline;
 
@@ -53,9 +65,7 @@ export const BottomNavigation = ({ activeTab, onSelectTab }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    height: 70,
     borderTopWidth: 1,
-    paddingBottom: 10,
     paddingTop: 6,
     justifyContent: 'space-around',
     alignItems: 'center',

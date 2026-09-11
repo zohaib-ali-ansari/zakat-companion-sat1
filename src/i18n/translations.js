@@ -129,7 +129,7 @@ export const translations = {
     fillRequiredFieldsError: 'Please enter a valid amount and recipient name.',
 
     // History Screens
-    pastYearsHistory: 'Past Years\nHistory',
+    pastYearsHistory: 'Past Years History',
     viewAllPayments: 'VIEW ALL PAYMENTS',
     allPaymentsTitle: 'All Payments',
     annualSummaryTitle: 'Annual Zakat Summary',
@@ -138,54 +138,19 @@ export const translations = {
     amountHeader: 'Amount',
     transactionSingle: 'Transaction',
     transactionPlural: 'Transactions',
-
-    // Assistant Screen
-    assistantTitle: 'Zakat Assistant',
-    assistantTagline: '🔒 100% Private (On-Device Local Processing)',
-    youTag: 'YOU',
-    aiTag: 'ZAKAT ASSISTANT',
-    typingText: 'AI Assistant is typing...',
-    micPrompt: 'Ask or tap mic to speak...',
-    sendBtn: 'Send',
-    disclaimerText: 'Zakat Assistant may produce inaccurate information about complex cases. Consult a scholar for official rulings.',
-    welcomeMessage: 'As-salamu alaykum. I am your Zakat Assistant. How can I help you with your Zakat rules or calculations today?',
-
-    // Settings Screen & Profile Edit
-    profileTitle: 'Settings & Profile',
-    userName: 'Hamza Khan',
-    userEmail: 'abdullah@example.com',
-    changeAvatar: 'Change Photo',
-    
-    // Settings Sections
-    sectionPreferences: 'PREFERENCES',
-    settingLanguage: 'Language',
-    settingDarkTheme: 'Dark Theme',
-    
-    sectionNotifications: 'NOTIFICATIONS',
-    settingPushNotifications: 'Push Notifications',
-    settingZakatReminders: 'Zakat Reminders',
-    
-    sectionSupportLegal: 'SUPPORT & LEGAL',
-    settingZakatGuidance: 'Zakat Guidance',
-    settingPrivacyPolicy: 'Privacy Policy',
-    settingTermsOfService: 'Terms of Service',
-    settingCalculatedZakatExplanation: 'Calculated Zakat Explanation',
-    
-    signOut: 'SIGN OUT',
-
-    // Navigation Tabs
-    navHome: 'Home',
-    navCalculator: 'Calculator',
-    navTrack: 'Track',
-    navHistory: 'History',
-    navAssistant: 'Assistant',
-
-    // Content Screens
-    privacyPolicyTitle: 'Privacy Policy',
-    termsOfServiceTitle: 'Terms of Service',
-    zakatGuidanceTitle: 'Zakat Guidance',
-    zakatExplanationTitle: 'Zakat Calculation Explanation',
-    backBtn: 'Back',
+    editPayment: 'Edit Payment',
+    deletePayment: 'Delete',
+    editPaymentTitle: 'Edit Payment',
+    editPaymentSub: 'Update the details of your Zakat payment below.',
+    updatePaymentBtn: 'UPDATE PAYMENT',
+    confirmDeletePayment: 'Are you sure you want to delete this payment record?',
+    confirmDeleteYear: 'Are you sure you want to delete all history records for this year?',
+    deleteYearBtn: 'Delete Year Record',
+    archiveYearBtn: 'Complete Zakat Year',
+    archiveSuccess: 'Zakat year has been archived to past history!',
+    deleteSuccess: 'Record deleted successfully.',
+    editAction: 'Edit',
+    deleteAction: 'Delete',
   },
   
   ur: {
@@ -318,7 +283,7 @@ export const translations = {
     fillRequiredFieldsError: 'براہ کرم درست رقم اور موصول کنندہ کا نام درج کریں۔',
 
     // History Screens
-    pastYearsHistory: 'گزشتہ سالوں کی\nہسٹری',
+    pastYearsHistory: 'گزشتہ سالوں کی ہسٹری',
     viewAllPayments: 'تمام ادائیگیاں دیکھیں',
     allPaymentsTitle: 'تمام ادائیگیاں',
     annualSummaryTitle: 'سالانہ زکوٰۃ کا خلاصہ',
@@ -327,6 +292,19 @@ export const translations = {
     amountHeader: 'رقم',
     transactionSingle: 'ادائیگی',
     transactionPlural: 'ادائیگیاں',
+    editPayment: 'ترمیم کریں',
+    deletePayment: 'حذف کریں',
+    editPaymentTitle: 'ادائیگی میں ترمیم',
+    editPaymentSub: 'اپنی زکوٰۃ کی ادائیگی کی تفصیلات میں تبدیلی کریں۔',
+    updatePaymentBtn: 'ادائیگی اپ ڈیٹ کریں',
+    confirmDeletePayment: 'کیا آپ واقعی اس ادائیگی کے ریکارڈ کو حذف کرنا چاہتے ہیں؟',
+    confirmDeleteYear: 'کیا آپ واقعی اس سال کے تمام ریکارڈز حذف کرنا چاہتے ہیں؟',
+    deleteYearBtn: 'سال کا ریکارڈ حذف کریں',
+    archiveYearBtn: 'زکوٰۃ سال مکمل کریں',
+    archiveSuccess: 'زکوٰۃ کا سال ہسٹری میں محفوظ کر دیا گیا ہے!',
+    deleteSuccess: 'ریکارڈ کامیابی سے حذف کر دیا گیا۔',
+    editAction: 'ترمیم',
+    deleteAction: 'حذف',
 
     // Assistant Screen
     assistantTitle: 'زکوٰۃ اسسٹنٹ',

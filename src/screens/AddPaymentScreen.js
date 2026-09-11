@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -10,12 +10,16 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 
-export default function AddPaymentScreen({ onBack }) {
+export default function AddPaymentScreen({ onBack, editingPayment }) {
   const { t, themeColors, isRTL } = useLanguage();
-  const { addPayment } = useZakat();
+  const { addPayment, editPayment } = useZakat();
+  const insets = useSafeAreaInsets();
+
+  const isEditing = Boolean(editingPayment?.id);
 
   const getTodayFormatted = () => {
     const d = new Date();
@@ -25,11 +29,20 @@ export default function AddPaymentScreen({ onBack }) {
     return `${year}-${month}-${day}`;
   };
 
-  const [date, setDate] = useState(getTodayFormatted());
-  const [amount, setAmount] = useState('');
-  const [recipient, setRecipient] = useState('');
-  const [notes, setNotes] = useState('');
+  const [date, setDate] = useState(editingPayment?.date || getTodayFormatted());
+  const [amount, setAmount] = useState(editingPayment?.amount ? String(editingPayment.amount) : '');
+  const [recipient, setRecipient] = useState(editingPayment?.recipient || '');
+  const [notes, setNotes] = useState(editingPayment?.notes || '');
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (editingPayment) {
+      setDate(editingPayment.date || getTodayFormatted());
+      setAmount(editingPayment.amount ? String(editingPayment.amount) : '');
+      setRecipient(editingPayment.recipient || '');
+      setNotes(editingPayment.notes || '');
+    }
+  }, [editingPayment]);
 
   const handleSubmit = () => {
     setErrorMessage('');
@@ -39,12 +52,22 @@ export default function AddPaymentScreen({ onBack }) {
       return;
     }
 
-    const success = addPayment({
-      date,
-      amount: parsedAmount,
-      recipient,
-      notes,
-    });
+    let success = false;
+    if (isEditing) {
+      success = editPayment(editingPayment.id, {
+        date,
+        amount: parsedAmount,
+        recipient,
+        notes,
+      });
+    } else {
+      success = addPayment({
+        date,
+        amount: parsedAmount,
+        recipient,
+        notes,
+      });
+    }
 
     if (success) {
       onBack?.();
@@ -57,7 +80,7 @@ export default function AddPaymentScreen({ onBack }) {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <View style={styles.topHeader}>
+      <View style={[styles.topHeader, { paddingTop: Math.max(insets.top + 4, 14) }]}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
           onPress={() => onBack?.()}
@@ -66,7 +89,7 @@ export default function AddPaymentScreen({ onBack }) {
           <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={themeColors.primary} />
         </TouchableOpacity>
         <Text style={[styles.topHeaderTitle, { color: themeColors.textPrimary }]}>
-          {t('addPaymentTitle')}
+          {isEditing ? t('editPaymentTitle') : t('addPaymentTitle')}
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -74,10 +97,10 @@ export default function AddPaymentScreen({ onBack }) {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.titleSection}>
           <Text style={[styles.title, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('addPaymentTitle')}
+            {isEditing ? t('editPaymentTitle') : t('addPaymentTitle')}
           </Text>
           <Text style={[styles.subtitle, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
-            {t('addPaymentSub')}
+            {isEditing ? t('editPaymentSub') : t('addPaymentSub')}
           </Text>
         </View>
 
@@ -159,7 +182,7 @@ export default function AddPaymentScreen({ onBack }) {
           activeOpacity={0.85}
         >
           <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
-          <Text style={styles.submitButtonText}>{t('submitPaymentBtn')}</Text>
+          <Text style={styles.submitButtonText}>{isEditing ? t('updatePaymentBtn') : t('submitPaymentBtn')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
