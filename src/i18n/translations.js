@@ -42,6 +42,8 @@ export const translations = {
 
     // Header & App
     appTitle: 'Zakat Companion',
+    themeLight: 'Light Mode',
+    themeDark: 'Dark Mode',
     
     // Home Dashboard Screen
     greeting: 'Assalamu Alaikum, Hamza',
@@ -99,6 +101,54 @@ export const translations = {
     nisabNotMetBadge: 'Below Nisab (No Zakat Due)',
     zakatPayableLabel: 'Net Zakat Due (2.5%):',
     saveCalculationBtn: 'Save to History',
+
+    // Track Screen & Add Payment
+    trackTitle: 'Track Zakat',
+    trackSub: 'Overview of your Zakat obligations and payment history.',
+    totalDueLabel: 'Total Due',
+    totalPaidLabel: 'Total Paid',
+    paidBadge: 'PAID',
+    nisabReachedOn: 'Nisab Reached on',
+    addPaymentBtn: 'ADD PAYMENT',
+    recentPaymentsTitle: 'Recent Payment History',
+    noPaymentsYet: 'No payments recorded yet.',
+
+    // Add Payment Form Screen
+    addPaymentTitle: 'Add Payment',
+    addPaymentSub: 'Enter the details of your Zakat payment below.',
+    dateLabel: 'Payment Date',
+    datePlaceholder: 'YYYY-MM-DD',
+    amountLabel: 'Payment Amount (PKR)',
+    amountPlaceholder: 'e.g. 50000',
+    recipientLabel: "Who's to paid (Recipient)",
+    recipientPlaceholder: 'e.g. Alkhidmat Foundation, Family, Needy',
+    notesLabel: 'Notes / Description (Optional)',
+    notesPlaceholder: 'Add optional notes or reference',
+    submitPaymentBtn: 'CONFIRM PAYMENT',
+    cancelBtn: 'CANCEL',
+    fillRequiredFieldsError: 'Please enter a valid amount and recipient name.',
+
+    // History Screens
+    pastYearsHistory: 'Past Years\nHistory',
+    viewAllPayments: 'VIEW ALL PAYMENTS',
+    allPaymentsTitle: 'All Payments',
+    annualSummaryTitle: 'Annual Zakat Summary',
+    dateHeader: 'Date',
+    recipientHeader: 'Recipient',
+    amountHeader: 'Amount',
+    transactionSingle: 'Transaction',
+    transactionPlural: 'Transactions',
+
+    // Assistant Screen
+    assistantTitle: 'Zakat Assistant',
+    assistantTagline: '🔒 100% Private (On-Device Local Processing)',
+    youTag: 'YOU',
+    aiTag: 'ZAKAT ASSISTANT',
+    typingText: 'AI Assistant is typing...',
+    micPrompt: 'Ask or tap mic to speak...',
+    sendBtn: 'Send',
+    disclaimerText: 'Zakat Assistant may produce inaccurate information about complex cases. Consult a scholar for official rulings.',
+    welcomeMessage: 'As-salamu alaykum. I am your Zakat Assistant. How can I help you with your Zakat rules or calculations today?',
 
     // Settings Screen & Profile Edit
     profileTitle: 'Settings & Profile',
@@ -181,11 +231,13 @@ export const translations = {
 
     // Header & App
     appTitle: 'زکوٰۃ کمپینین',
+    themeLight: 'لائٹ موڈ',
+    themeDark: 'ڈارک موڈ',
     
     // Home Dashboard Screen
     greeting: 'السلام علیکم، حمزہ',
     greetingSub: 'آپ کا زکوٰۃ کا حساب کتاب اپ ٹو ڈیٹ ہے۔',
-    remainingZakatLabel: 'باقی زکاۃ',
+    remainingZakatLabel: 'باقی زکوٰۃ',
     remainingZakatValue: 'PKR 340,000',
     calculateZakatBtn: 'زکوٰۃ کا حساب کریں',
     
@@ -195,7 +247,7 @@ export const translations = {
     historyAction: 'ہسٹری',
     
     // Status Banner
-    statusLabel: 'Status',
+    statusLabel: 'حیثیت',
     nisabComplete: 'نصاب مکمل',
     
     // Assets Section
@@ -239,6 +291,54 @@ export const translations = {
     zakatPayableLabel: 'واجب الادا زکوٰۃ (2.5%):',
     saveCalculationBtn: 'ہسٹری میں محفوظ کریں',
 
+    // Track Screen & Add Payment
+    trackTitle: 'زکوٰۃ ٹریکر',
+    trackSub: 'آپ کی زکوٰۃ کے واجبات اور ادائیگیوں کی تفصیلات۔',
+    totalDueLabel: 'کل واجب الادا',
+    totalPaidLabel: 'کل ادا شدہ',
+    paidBadge: 'ادا شدہ',
+    nisabReachedOn: 'نصاب کی تاریخ:',
+    addPaymentBtn: 'ادائیگی شامل کریں',
+    recentPaymentsTitle: 'حالیہ ادائیگیوں کی تفصیلات',
+    noPaymentsYet: 'ابھی تک کوئی ادائیگی ریکارڈ نہیں ہوئی۔',
+
+    // Add Payment Form Screen
+    addPaymentTitle: 'ادائیگی درج کریں',
+    addPaymentSub: 'اپنی زکوٰۃ کی ادائیگی کی معلومات درج کریں۔',
+    dateLabel: 'ادائیگی کی تاریخ',
+    datePlaceholder: 'YYYY-MM-DD',
+    amountLabel: 'ادائیگی کی رقم (PKR)',
+    amountPlaceholder: 'مثال: 50000',
+    recipientLabel: 'جسے ادائیگی کی (موصول کنندہ)',
+    recipientPlaceholder: 'مثال: الخدمت فاؤنڈیشن، مستحق، رشتہ دار',
+    notesLabel: 'نوٹس / تفصیل (اختیاری)',
+    notesPlaceholder: 'اختیاری تفصیلات درج کریں',
+    submitPaymentBtn: 'ادائیگی کی تصدیق کریں',
+    cancelBtn: 'منسوخ کریں',
+    fillRequiredFieldsError: 'براہ کرم درست رقم اور موصول کنندہ کا نام درج کریں۔',
+
+    // History Screens
+    pastYearsHistory: 'گزشتہ سالوں کی\nہسٹری',
+    viewAllPayments: 'تمام ادائیگیاں دیکھیں',
+    allPaymentsTitle: 'تمام ادائیگیاں',
+    annualSummaryTitle: 'سالانہ زکوٰۃ کا خلاصہ',
+    dateHeader: 'تاریخ',
+    recipientHeader: 'موصول کنندہ',
+    amountHeader: 'رقم',
+    transactionSingle: 'ادائیگی',
+    transactionPlural: 'ادائیگیاں',
+
+    // Assistant Screen
+    assistantTitle: 'زکوٰۃ اسسٹنٹ',
+    assistantTagline: '🔒 100% پرائیویٹ (مقامی ڈیوائس پر پروسیسنگ)',
+    youTag: 'آپ',
+    aiTag: 'زکوٰۃ اسسٹنٹ',
+    typingText: 'اسسٹنٹ جواب تیار کر رہا ہے...',
+    micPrompt: 'سوال پوچھیں یا مائیک پر بولیں...',
+    sendBtn: 'بھیجیں',
+    disclaimerText: 'زکوٰۃ اسسٹنٹ پیچیدہ مسائل میں غلط معلومات دے سکتا ہے۔ حتمی فتویٰ کے لیے علماء سے رجوع کریں۔',
+    welcomeMessage: 'السلام علیکم! میں آپ کا زکوٰۃ اسسٹنٹ ہوں۔ آج میں زکوٰۃ کے مسائل اور حساب کتاب میں آپ کی کیا مدد کر سکتا ہوں؟',
+
     // Settings Screen & Profile Edit
     profileTitle: 'پروفائل اور سیٹنگز',
     userName: 'حمزہ خان',
@@ -246,19 +346,19 @@ export const translations = {
     changeAvatar: 'تصویر تبدیل کریں',
     
     // Settings Sections
-    sectionPreferences: 'PREFERENCES',
-    settingLanguage: 'Language',
-    settingDarkTheme: 'Dark Theme',
+    sectionPreferences: 'ترجیحات',
+    settingLanguage: 'زبان',
+    settingDarkTheme: 'ڈارک تھیم',
     
-    sectionNotifications: 'NOTIFICATIONS',
-    settingPushNotifications: 'Push Notifications',
-    settingZakatReminders: 'Zakat Reminders',
+    sectionNotifications: 'نوٹیفیکیشنز',
+    settingPushNotifications: 'پش نوٹیفیکیشنز',
+    settingZakatReminders: 'زکوٰۃ ریمائنڈرز',
     
-    sectionSupportLegal: 'SUPPORT & LEGAL',
-    settingZakatGuidance: 'Zakat Guidance',
-    settingPrivacyPolicy: 'Privacy Policy',
-    settingTermsOfService: 'Terms of Service',
-    settingCalculatedZakatExplanation: 'Calculated Zakat Explanation',
+    sectionSupportLegal: 'رہنمائی و قانونی',
+    settingZakatGuidance: 'زکوٰۃ کی رہنمائی',
+    settingPrivacyPolicy: 'پرائیویسی پالیسی',
+    settingTermsOfService: 'سروس کی شرائط',
+    settingCalculatedZakatExplanation: 'زکوٰۃ حساب کی وضاحت',
     
     signOut: 'سائن آؤٹ',
 
@@ -277,3 +377,4 @@ export const translations = {
     backBtn: 'واپس',
   },
 };
+

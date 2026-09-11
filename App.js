@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { BottomNavigation } from './src/components/BottomNavigation';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
+import { ZakatProvider } from './src/context/ZakatContext';
 import AddPaymentScreen from './src/screens/AddPaymentScreen';
 import { AssistantScreen } from './src/screens/AssistantScreen';
 import { CalculatedZakatExplanationScreen } from './src/screens/CalculatedZakatExplanationScreen';
@@ -113,6 +114,7 @@ function MainAppContent() {
       return (
         <HistoryRecordsScreen
           onBack={() => setHistoryView('list')}
+          onOpenSettings={() => setActiveTab('settings')}
         />
       );
     }
@@ -169,7 +171,9 @@ export default function App() {
     <SafeAreaProvider style={styles.appContainer}>
       <StatusBar style="auto" />
       <LanguageProvider>
-        <MainAppContent />
+        <ZakatProvider>
+          <MainAppContent />
+        </ZakatProvider>
       </LanguageProvider>
     </SafeAreaProvider>
   );
@@ -186,4 +190,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-

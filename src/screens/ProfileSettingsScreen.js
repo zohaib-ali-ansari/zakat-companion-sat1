@@ -12,7 +12,7 @@ export const ProfileSettingsScreen = ({
   onOpenGuidance,
   onOpenExplanation,
 }) => {
-  const { t, language, setLanguage, isDarkMode, toggleDarkMode, themeColors } = useLanguage();
+  const { t, language, setLanguage, isDarkMode, toggleDarkMode, themeColors, isRTL } = useLanguage();
   const [pushNotifications, setPushNotifications] = React.useState(true);
   const [zakatReminders, setZakatReminders] = React.useState(true);
   const [avatarIndex, setAvatarIndex] = React.useState(0);
@@ -28,13 +28,13 @@ export const ProfileSettingsScreen = ({
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
       {/* Header bar */}
-      <View style={styles.headerBar}>
+      <View style={[styles.headerBar, isRTL && styles.rtlRow]}>
         <TouchableOpacity
           style={[styles.iconButton, { backgroundColor: themeColors.cardBg }]}
           onPress={onClose}
           activeOpacity={0.7}
         >
-          <Ionicons name="grid-outline" size={22} color={themeColors.primary} />
+          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={themeColors.primary} />
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -74,7 +74,7 @@ export const ProfileSettingsScreen = ({
 
         {/* PREFERENCES */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {t('sectionPreferences')}
           </Text>
 
@@ -101,7 +101,7 @@ export const ProfileSettingsScreen = ({
 
         {/* NOTIFICATIONS */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {t('sectionNotifications')}
           </Text>
 
@@ -124,7 +124,7 @@ export const ProfileSettingsScreen = ({
 
         {/* SUPPORT & LEGAL */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {t('sectionSupportLegal')}
           </Text>
 
@@ -184,6 +184,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingVertical: 14,
+  },
+  rtlRow: {
+    flexDirection: 'row-reverse',
   },
   iconButton: {
     padding: 8,
@@ -259,6 +262,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1,
     marginBottom: 10,
+  },
+  rtlText: {
+    textAlign: 'right',
   },
   signOutButton: {
     flexDirection: 'row',

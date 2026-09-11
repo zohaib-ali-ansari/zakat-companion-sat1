@@ -3,26 +3,37 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
 export const Header = ({ onOpenSettings }) => {
-  const { t, isRTL, language, themeColors } = useLanguage();
+  const { t, isRTL, language, isDarkMode, toggleDarkMode, themeColors } = useLanguage();
 
   return (
     <View style={[styles.headerContainer, { backgroundColor: themeColors.background }, isRTL && styles.rtlContainer]}>
+      {/* Profile option button on left */}
       <TouchableOpacity
         style={[styles.avatarBadge, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}
         onPress={onOpenSettings}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Profile settings"
       >
-        <Text style={[styles.avatarText, { color: themeColors.primary }]}>{language.toUpperCase()}</Text>
+        <Ionicons name="person" size={20} color={themeColors.primary} />
       </TouchableOpacity>
 
+      {/* App Title */}
       <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('appTitle')}</Text>
 
+      {/* Dark / Light Theme Toggle Button on right (replacing menu icon) */}
       <TouchableOpacity
         style={[styles.iconButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
-        onPress={onOpenSettings}
+        onPress={toggleDarkMode}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       >
-        <Ionicons name="menu-outline" size={26} color={themeColors.textPrimary} />
+        <Ionicons
+          name={isDarkMode ? 'sunny' : 'moon'}
+          size={22}
+          color={isDarkMode ? '#F59E0B' : themeColors.primary}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -47,18 +58,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
   title: {
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   iconButton: {
-    padding: 6,
-    borderRadius: 10,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
+

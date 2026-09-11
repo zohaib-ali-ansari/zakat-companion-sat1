@@ -2,9 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
+import { useZakat } from '../context/ZakatContext';
 
 export const SummaryCard = ({ onCalculatePress }) => {
   const { t, isRTL, themeColors } = useLanguage();
+  const { remaining } = useZakat();
+
+  const formattedRemaining = `PKR ${Number(remaining || 0).toLocaleString('en-US')}`;
 
   return (
     <View style={styles.cardContainer}>
@@ -13,7 +17,7 @@ export const SummaryCard = ({ onCalculatePress }) => {
       </Text>
 
       <Text style={[styles.amountText, { color: themeColors.primary }, isRTL && styles.rtlText]}>
-        {t('remainingZakatValue')}
+        {formattedRemaining}
       </Text>
 
       <TouchableOpacity
@@ -82,3 +86,4 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '180deg' }],
   },
 });
+

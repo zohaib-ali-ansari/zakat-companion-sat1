@@ -17,73 +17,80 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
 import { Header } from '../components/Header';
 
-// Master list of suggestions for search and auto-filtering
-const ALL_SUGGESTIONS = [
+const SUGGESTIONS_EN = [
   'What is Nisab?',
   'How to calculate Gold & Silver?',
   'Who is eligible to receive Zakat?',
   'Zakat on Cash & Bank Savings',
-  'Is Zakat applicable on Property & Real Estate?',
-  'How to calculate Zakat on Stocks & Crypto?',
-  'What is Hawl (Zakat Year)?',
-  'Zakat on Business Inventory & Receivables',
-  'How to pay Zakat on Provident Fund?',
+  'Is Zakat applicable on Property?',
+  'How to calculate Zakat on Stocks?',
 ];
 
-const INITIAL_MESSAGES = [
-  {
-    id: '1',
-    text: 'As-salamu alaykum. I am your Zakat Assistant. How can I help you with your Zakat rules or calculations today?',
-    sender: 'assistant',
-  },
+const SUGGESTIONS_UR = [
+  'نصاب کی مقدار کیا ہے؟',
+  'سونے اور چاندی پر زکوٰۃ کا حساب کیسے لگائیں؟',
+  'زکوٰۃ کا مستحق کون ہے؟',
+  'بینک بیلنس اور نقد رقم پر زکوٰۃ',
+  'کیا پراپرٹی پر زکوٰۃ لاگو ہوتی ہے؟',
+  'شیئرز اور اسٹاکس پر زکوٰۃ کا حساب',
 ];
 
-// Topic-specific mock replies. Replace with a real AI API call later.
-function getMockReply(text, isQuestionValid) {
+function getMockReply(text, language) {
   const lower = text.toLowerCase();
+  const isUr = language === 'ur';
 
-  if (lower.includes('nisab')) {
-    return 'Nisab is the minimum amount of wealth you must own before Zakat becomes due, commonly based on the value of 87.48g of gold or 612.36g of silver.';
+  if (lower.includes('nisab') || lower.includes('نصاب')) {
+    return isUr
+      ? 'نصاب وہ کم از کم شرعی مالیت ہے جس پر زکوٰۃ فرض ہوتی ہے۔ یہ 87.48 گرام (7.5 تولے) سونا یا 612.36 گرام (52.5 تولے) چاندی کی مالیت کے برابر ہوتا ہے۔'
+      : 'Nisab is the minimum threshold of wealth you must own before Zakat becomes due, commonly equal to 87.48g of gold or 612.36g of silver.';
   }
-  if (lower.includes('gold') || lower.includes('silver')) {
-    return 'Gold and silver are zakatable at 2.5% of their current market value, whether held as jewelry, coins, or bullion.';
+  if (lower.includes('gold') || lower.includes('silver') || lower.includes('سونا') || lower.includes('چاندی')) {
+    return isUr
+      ? 'سونا اور چاندی پر ان کی موجودہ مارکیٹ ویلیو کے مطابق 2.5% زکوٰۃ واجب الادا ہوتی ہے، چاہے وہ زیورات کی شکل میں ہوں یا سکے/بسکوٹ۔'
+      : 'Gold and silver are zakatable at 2.5% of their current market value, whether held as jewelry, coins, or bullion.';
   }
-  if (lower.includes('eligible') || lower.includes('receive')) {
-    return 'Zakat can be given to categories such as the poor, the needy, those in debt, and other eligible recipients defined in Islamic guidance.';
+  if (lower.includes('eligible') || lower.includes('receive') || lower.includes('مستحق') || lower.includes('کس کو')) {
+    return isUr
+      ? 'زکوٰۃ غراء، مساکین، مقروضین، اور قران مجید میں بیان کردہ 8 مخصوص مصارف زکوٰۃ میں دی جا سکتی ہے۔'
+      : 'Zakat can be given to categories such as the poor, the needy, those in debt, and other eligible recipients defined in Islamic guidance.';
   }
-  if (lower.includes('cash') || lower.includes('bank') || lower.includes('saving')) {
-    return 'All cash on hand and balances in savings or current bank accounts are zakatable at 2.5% of the total amount.';
+  if (lower.includes('cash') || lower.includes('bank') || lower.includes('نقد') || lower.includes('بینک')) {
+    return isUr
+      ? 'والٹ میں موجود نقد رقم اور بینک اکاؤنٹس کے تمام بیلنس پر 2.5% کی شرح سے زکوٰۃ فرض ہے۔'
+      : 'All cash on hand and balances in savings or current bank accounts are zakatable at 2.5% of the total amount.';
   }
-  if (lower.includes('property') || lower.includes('real estate')) {
-    return 'Property used for personal residence is not zakatable. Property held for investment or resale is generally zakatable on its value or rental income.';
+  if (lower.includes('property') || lower.includes('پراپرٹی')) {
+    return isUr
+      ? 'ذاتی رہائش کی پراپرٹی پر زکوٰۃ نہیں ہے۔ تجارتی یا بیچنے کی غرض سے خریدی گئی پراپرٹی پر زکوٰۃ واجب ہوتی ہے۔'
+      : 'Personal residence property is not zakatable. Property held for resale or trade is zakatable on its market value.';
   }
-  if (lower.includes('stock') || lower.includes('crypto')) {
-    return 'Stocks held for trading and cryptocurrency are typically zakatable at their current market value. Long-term investment shares may only require Zakat on the underlying zakatable assets.';
-  }
-  if (lower.includes('hawl')) {
-    return 'Hawl is the completion of one full lunar year during which your wealth stays above the Nisab threshold, after which Zakat becomes due.';
-  }
-  if (lower.includes('business') || lower.includes('inventory') || lower.includes('receivable')) {
-    return 'Business inventory held for resale is zakatable at its current market value. Receivables you expect to collect are also generally zakatable.';
-  }
-  if (lower.includes('provident') || lower.includes('fund')) {
-    return 'Provident fund contributions are generally zakatable once you have access to withdraw them and they meet the Nisab threshold, held for one lunar year.';
-  }
-  if (text.trim().length < 3 || (!isQuestionValid && !lower.includes('zakat'))) {
-    return "I couldn't understand that. Please ask a question related to Zakat, Gold, Nisab, or Cash.";
-  }
-  return "That's a good question. For a precise ruling on your situation, I'd recommend checking the Guidance section or consulting a knowledgeable source.";
+
+  return isUr
+    ? 'یہ ایک اہم سوال ہے۔ دقیق شرعی رہنمائی اور مخصوص حالات کے حل کے لیے گائیڈنس کا شعبہ ملاحظہ کریں یا عالم دین سے رجوع کریں۔'
+    : "That is an important question. For a precise ruling on your situation, check the Guidance section or consult a knowledgeable scholar.";
 }
 
 export const AssistantScreen = ({ onOpenSettings }) => {
-  const { themeColors, isRTL } = useLanguage();
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const { t, language, themeColors, isRTL } = useLanguage();
+  const isUr = language === 'ur';
+
+  const initialMsgText = t('welcomeMessage');
+
+  const [messages, setMessages] = useState([
+    {
+      id: '1',
+      text: initialMsgText,
+      sender: 'assistant',
+    },
+  ]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const listRef = useRef(null);
 
-  const filteredSuggestions = ALL_SUGGESTIONS.filter((item) =>
+  const activeSuggestions = isUr ? SUGGESTIONS_UR : SUGGESTIONS_EN;
+
+  const filteredSuggestions = activeSuggestions.filter((item) =>
     item.toLowerCase().includes(inputText.toLowerCase().trim())
   );
 
@@ -91,17 +98,13 @@ export const AssistantScreen = ({ onOpenSettings }) => {
     const text = textToSend || inputText;
     if (!text.trim()) return;
 
-    const isQuestionValid = ALL_SUGGESTIONS.some((s) =>
-      text.toLowerCase().includes(s.toLowerCase().split(' ')[0])
-    );
-
     const userMsg = { id: Date.now().toString(), text, sender: 'user' };
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInputText('');
     setLoading(true);
 
     setTimeout(() => {
-      const replyText = getMockReply(text, isQuestionValid);
+      const replyText = getMockReply(text, language);
       const aiMsg = { id: (Date.now() + 1).toString(), text: replyText, sender: 'assistant' };
       setMessages((prev) => [...prev, aiMsg]);
       setLoading(false);
@@ -111,10 +114,13 @@ export const AssistantScreen = ({ onOpenSettings }) => {
 
   const handleVoiceInput = () => {
     setIsListening(true);
-    Alert.alert('Voice Listening', 'Listening for your question... (Voice recognition enabled)');
+    Alert.alert(
+      isUr ? 'آواز ریکارڈ ہو رہی ہے' : 'Voice Listening',
+      isUr ? 'آپ کا سوال سن رہے ہیں...' : 'Listening for your question...'
+    );
     setTimeout(() => {
       setIsListening(false);
-      setInputText('How to calculate Zakat on Gold?');
+      setInputText(isUr ? 'سونے پر زکوٰۃ کا حساب کیسے ہوگا؟' : 'How to calculate Zakat on Gold?');
     }, 2000);
   };
 
@@ -124,7 +130,9 @@ export const AssistantScreen = ({ onOpenSettings }) => {
       <Header onOpenSettings={onOpenSettings} />
 
       <View style={[styles.privacyBadge, { backgroundColor: themeColors.successBg || '#F0FDF4' }]}>
-        <Text style={styles.privacyText}>🔒 100% Private (On-Device Local Processing)</Text>
+        <Text style={[styles.privacyText, { color: themeColors.success || '#166534' }]}>
+          {t('assistantTagline')}
+        </Text>
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
@@ -136,21 +144,31 @@ export const AssistantScreen = ({ onOpenSettings }) => {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           renderItem={({ item }) => (
             <View style={{ marginBottom: 12 }}>
-              <Text style={item.sender === 'user' ? styles.userTag : styles.aiTag}>
-                {item.sender === 'user' ? 'YOU' : 'ZAKAT ASSISTANT'}
+              <Text
+                style={[
+                  item.sender === 'user' ? styles.userTag : styles.aiTag,
+                  { color: themeColors.textMuted },
+                  isRTL && item.sender === 'user' && { alignSelf: 'flex-start' },
+                  isRTL && item.sender !== 'user' && { alignSelf: 'flex-end' },
+                ]}
+              >
+                {item.sender === 'user' ? t('youTag') : t('aiTag')}
               </Text>
               <View
                 style={[
                   styles.messageBubble,
                   item.sender === 'user'
-                    ? { alignSelf: 'flex-end', backgroundColor: themeColors.primary }
-                    : { alignSelf: 'flex-start', backgroundColor: themeColors.cardBgAlt },
-                ]}>
+                    ? { alignSelf: isRTL ? 'flex-start' : 'flex-end', backgroundColor: themeColors.primary }
+                    : { alignSelf: isRTL ? 'flex-end' : 'flex-start', backgroundColor: themeColors.cardBgAlt },
+                ]}
+              >
                 <Text
                   style={[
                     styles.messageText,
-                    { color: item.sender === 'user' ? themeColors.white : themeColors.textPrimary },
-                  ]}>
+                    { color: item.sender === 'user' ? '#FFFFFF' : themeColors.textPrimary },
+                    isRTL && { textAlign: 'right' },
+                  ]}
+                >
                   {item.text}
                 </Text>
               </View>
@@ -159,10 +177,10 @@ export const AssistantScreen = ({ onOpenSettings }) => {
         />
 
         {loading && (
-          <View style={styles.loadingContainer}>
+          <View style={[styles.loadingContainer, isRTL && styles.rtlRow]}>
             <ActivityIndicator size="small" color={themeColors.primary} />
             <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>
-              AI Assistant is typing...
+              {t('typingText')}
             </Text>
           </View>
         )}
@@ -177,7 +195,8 @@ export const AssistantScreen = ({ onOpenSettings }) => {
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[styles.chip, { borderColor: themeColors.border, backgroundColor: themeColors.cardBg }]}
-                  onPress={() => handleSend(item)}>
+                  onPress={() => handleSend(item)}
+                >
                   <Text style={[styles.chipText, { color: themeColors.textSecondary }]}>🔍 {item}</Text>
                 </TouchableOpacity>
               )}
@@ -185,16 +204,21 @@ export const AssistantScreen = ({ onOpenSettings }) => {
           </View>
         )}
 
-        <View style={[styles.inputContainer, { backgroundColor: themeColors.cardBg, borderTopColor: themeColors.border }]}>
+        <View style={[styles.inputContainer, { backgroundColor: themeColors.cardBg, borderTopColor: themeColors.border }, isRTL && styles.rtlRow]}>
           <TouchableOpacity
             style={[styles.micButton, { backgroundColor: themeColors.cardBgAlt }, isListening && styles.micActive]}
-            onPress={handleVoiceInput}>
+            onPress={handleVoiceInput}
+          >
             <Ionicons name="mic" size={18} color={themeColors.textSecondary} />
           </TouchableOpacity>
 
           <TextInput
-            style={[styles.input, { color: themeColors.textPrimary, borderColor: themeColors.border, backgroundColor: themeColors.background }]}
-            placeholder="Ask or tap mic to speak..."
+            style={[
+              styles.input,
+              { color: themeColors.textPrimary, borderColor: themeColors.border, backgroundColor: themeColors.background },
+              isRTL && { textAlign: 'right' },
+            ]}
+            placeholder={t('micPrompt')}
             placeholderTextColor={themeColors.textMuted}
             value={inputText}
             onChangeText={setInputText}
@@ -202,14 +226,15 @@ export const AssistantScreen = ({ onOpenSettings }) => {
 
           <TouchableOpacity
             style={[styles.sendButton, { backgroundColor: themeColors.primary }]}
-            onPress={() => handleSend()}>
-            <Text style={styles.sendButtonText}>Send</Text>
+            onPress={() => handleSend()}
+          >
+            <Text style={styles.sendButtonText}>{t('sendBtn')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.disclaimerContainer}>
           <Text style={[styles.disclaimerText, { color: themeColors.textMuted }]}>
-            Zakat Assistant may produce inaccurate information about complex cases. Consult a scholar for official rulings.
+            {t('disclaimerText')}
           </Text>
         </View>
       </KeyboardAvoidingView>
@@ -219,18 +244,19 @@ export const AssistantScreen = ({ onOpenSettings }) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  privacyBadge: { paddingVertical: 4, alignItems: 'center' },
-  privacyText: { fontSize: 10, fontWeight: '600', color: '#166534' },
+  privacyBadge: { paddingVertical: 6, alignItems: 'center' },
+  privacyText: { fontSize: 11, fontWeight: '700' },
   chatList: { paddingHorizontal: 16, paddingTop: 8 },
-  aiTag: { fontSize: 9, fontWeight: '700', color: '#64748B', marginBottom: 4 },
-  userTag: { fontSize: 9, fontWeight: '700', color: '#64748B', marginBottom: 4, alignSelf: 'flex-end' },
+  aiTag: { fontSize: 9, fontWeight: '700', marginBottom: 4 },
+  userTag: { fontSize: 9, fontWeight: '700', marginBottom: 4, alignSelf: 'flex-end' },
   messageBubble: { padding: 14, borderRadius: 16, maxWidth: '85%' },
-  messageText: { fontSize: 13, lineHeight: 20 },
+  messageText: { fontSize: 14, lineHeight: 20 },
   loadingContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 8 },
   loadingText: { marginLeft: 8, fontSize: 12 },
+  rtlRow: { flexDirection: 'row-reverse' },
   suggestionsContainer: { paddingHorizontal: 12, marginBottom: 8 },
   chip: { borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8 },
-  chipText: { fontSize: 12 },
+  chipText: { fontSize: 12, fontWeight: '600' },
   inputContainer: {
     flexDirection: 'row',
     paddingHorizontal: 12,

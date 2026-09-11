@@ -8,13 +8,16 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
+import { useZakat } from '../context/ZakatContext';
 import { Header } from '../components/Header';
 
 export const CalculatorScreen = ({ onOpenSettings }) => {
   const { t, themeColors, isRTL } = useLanguage();
+  const { updateTotalDue } = useZakat();
 
   // Active Category Toggles
   const [selectedCategories, setSelectedCategories] = useState({
@@ -38,6 +41,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
 
   // Calculation Result State
   const [calculated, setCalculated] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   const toggleCategory = (catKey) => {
     setSelectedCategories((prev) => ({ ...prev, [catKey]: !prev[catKey] }));
@@ -66,6 +70,20 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
       isNisabMet,
       zakatPayable,
     });
+    setIsSaved(false);
+  };
+
+  const handleSaveToHistory = () => {
+    if (calculated && calculated.zakatPayable > 0) {
+      updateTotalDue(calculated.zakatPayable);
+      setIsSaved(true);
+      Alert.alert(
+        t('appTitle'),
+        isRTL
+          ? 'آپ کی زکوٰۃ کی کل مقدار ٹریکر میں اپ ڈیٹ ہو گئی ہے!'
+          : 'Your total Zakat due has been updated in the tracker!'
+      );
+    }
   };
 
   const categories = [
@@ -86,10 +104,10 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
         
         {/* Title Header */}
         <View style={styles.headerSection}>
-          <Text style={[styles.pageTitle, { color: themeColors.textPrimary }]}>
+          <Text style={[styles.pageTitle, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
             {t('calculatorTitle')}
           </Text>
-          <Text style={[styles.pageSub, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.pageSub, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {t('calculatorSub')}
           </Text>
         </View>
@@ -99,7 +117,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           <Text style={[styles.stepTitle, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
             {t('selectAssetsStep')}
           </Text>
-          <View style={styles.chipsGrid}>
+          <View style={[styles.chipsGrid, isRTL && styles.rtlRow]}>
             {categories.map((cat) => {
               const isSelected = selectedCategories[cat.key];
               return (
@@ -111,6 +129,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
                       backgroundColor: isSelected ? themeColors.primaryLight : themeColors.cardBg,
                       borderColor: isSelected ? themeColors.primary : themeColors.border,
                     },
+                    isRTL && styles.rtlRow,
                   ]}
                   onPress={() => toggleCategory(cat.key)}
                   activeOpacity={0.8}
@@ -144,18 +163,18 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           {/* Gold & Silver Inputs */}
           {selectedCategories.goldSilver && (
             <View style={styles.fieldGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldGoldVal')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldGoldVal')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={goldVal}
                 onChangeText={setGoldVal}
                 placeholder="0"
                 placeholderTextColor={themeColors.textMuted}
               />
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldSilverVal')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldSilverVal')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={silverVal}
                 onChangeText={setSilverVal}
@@ -168,18 +187,18 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           {/* Cash Inputs */}
           {selectedCategories.cash && (
             <View style={styles.fieldGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldCashHand')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldCashHand')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={cashHand}
                 onChangeText={setCashHand}
                 placeholder="0"
                 placeholderTextColor={themeColors.textMuted}
               />
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldBankSavings')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldBankSavings')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={bankSavings}
                 onChangeText={setBankSavings}
@@ -192,9 +211,9 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           {/* Stocks Inputs */}
           {selectedCategories.stocks && (
             <View style={styles.fieldGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldStockVal')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldStockVal')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={stockVal}
                 onChangeText={setStockVal}
@@ -207,9 +226,9 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           {/* Property Inputs */}
           {selectedCategories.property && (
             <View style={styles.fieldGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldPropertyVal')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldPropertyVal')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={propertyVal}
                 onChangeText={setPropertyVal}
@@ -222,9 +241,9 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           {/* Business Inputs */}
           {selectedCategories.business && (
             <View style={styles.fieldGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldBusinessVal')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldBusinessVal')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={businessVal}
                 onChangeText={setBusinessVal}
@@ -237,9 +256,9 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           {/* Liabilities Inputs */}
           {selectedCategories.liabilities && (
             <View style={styles.fieldGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldLiabilitiesVal')}</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{t('fieldLiabilitiesVal')}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]}
+                style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }, isRTL && styles.rtlInput]}
                 keyboardType="numeric"
                 value={liabilitiesVal}
                 onChangeText={setLiabilitiesVal}
@@ -267,19 +286,19 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
               {t('remainingZakatLabel')}
             </Text>
 
-            <View style={styles.resultRow}>
+            <View style={[styles.resultRow, isRTL && styles.rtlRow]}>
               <Text style={[styles.resultRowLabel, { color: themeColors.textSecondary }]}>{t('totalWealthLabel')}</Text>
               <Text style={[styles.resultRowVal, { color: themeColors.textPrimary }]}>PKR {calculated.totalAssets.toLocaleString()}</Text>
             </View>
 
-            <View style={styles.resultRow}>
+            <View style={[styles.resultRow, isRTL && styles.rtlRow]}>
               <Text style={[styles.resultRowLabel, { color: themeColors.textSecondary }]}>{t('netDeductionsLabel')}</Text>
               <Text style={[styles.resultRowVal, { color: themeColors.danger }]}>- PKR {calculated.liabilities.toLocaleString()}</Text>
             </View>
 
             <View style={styles.divider} />
 
-            <View style={styles.resultRow}>
+            <View style={[styles.resultRow, isRTL && styles.rtlRow]}>
               <Text style={[styles.resultRowLabel, { color: themeColors.textPrimary, fontWeight: '700' }]}>{t('netWealthLabel')}</Text>
               <Text style={[styles.resultRowVal, { color: themeColors.textPrimary, fontWeight: '800' }]}>PKR {calculated.netZakatableWealth.toLocaleString()}</Text>
             </View>
@@ -303,9 +322,19 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
             </Text>
 
             {/* Save Action */}
-            <TouchableOpacity style={[styles.saveBtn, { backgroundColor: themeColors.primaryLight }]}>
-              <Ionicons name="bookmark-outline" size={18} color={themeColors.primary} />
-              <Text style={[styles.saveBtnText, { color: themeColors.primary }]}>{t('saveCalculationBtn')}</Text>
+            <TouchableOpacity
+              style={[styles.saveBtn, { backgroundColor: isSaved ? themeColors.successBg : themeColors.primaryLight }]}
+              onPress={handleSaveToHistory}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isSaved ? 'checkmark-circle' : 'bookmark-outline'}
+                size={18}
+                color={isSaved ? themeColors.success : themeColors.primary}
+              />
+              <Text style={[styles.saveBtnText, { color: isSaved ? themeColors.success : themeColors.primary }]}>
+                {isSaved ? (isRTL ? 'محفوظ ہو گیا' : 'Saved to Tracker') : t('saveCalculationBtn')}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -345,6 +374,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   rtlText: {
+    textAlign: 'right',
+  },
+  rtlRow: {
+    flexDirection: 'row-reverse',
+  },
+  rtlInput: {
     textAlign: 'right',
   },
   chipsGrid: {

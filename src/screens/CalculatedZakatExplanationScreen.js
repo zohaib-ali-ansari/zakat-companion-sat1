@@ -10,9 +10,9 @@ export const CalculatedZakatExplanationScreen = ({ onBack }) => {
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, isRTL && styles.rtlRow]}>
         <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={themeColors.primary} />
+          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={themeColors.primary} />
           <Text style={[styles.backText, { color: themeColors.primary }]}>{t('backBtn')}</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: themeColors.textPrimary }]}>{t('zakatExplanationTitle')}</Text>
@@ -22,13 +22,15 @@ export const CalculatedZakatExplanationScreen = ({ onBack }) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Step 1: Sum Assets */}
         <View style={[styles.stepCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
-          <View style={[styles.stepBadge, { backgroundColor: themeColors.primaryLight }]}>
-            <Text style={[styles.stepBadgeText, { color: themeColors.primary }]}>STEP 1</Text>
+          <View style={[styles.stepBadge, { backgroundColor: themeColors.primaryLight }, isRTL && styles.rtlSelf]}>
+            <Text style={[styles.stepBadgeText, { color: themeColors.primary }]}>
+              {isRTL ? 'مرحلہ ۱' : 'STEP 1'}
+            </Text>
           </View>
-          <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
+          <Text style={[styles.cardTitle, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
             {isRTL ? 'تمام قابل زکوٰۃ اثاثوں کا مجموعہ' : 'Summing All Eligible Assets'}
           </Text>
-          <Text style={[styles.cardBody, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.cardBody, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {isRTL
               ? 'اپنے تمام نقد رقم، سونے، چاندی، اور تجارتی سرمایے کی کل مالیت جمع کی جاتی ہے۔'
               : 'Add the current monetary value of all your cash, bank balances, gold, silver, investments, and trade goods.'}
@@ -37,13 +39,15 @@ export const CalculatedZakatExplanationScreen = ({ onBack }) => {
 
         {/* Step 2: Deduct Short-Term Liabilities */}
         <View style={[styles.stepCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
-          <View style={[styles.stepBadge, { backgroundColor: themeColors.primaryLight }]}>
-            <Text style={[styles.stepBadgeText, { color: themeColors.primary }]}>STEP 2</Text>
+          <View style={[styles.stepBadge, { backgroundColor: themeColors.primaryLight }, isRTL && styles.rtlSelf]}>
+            <Text style={[styles.stepBadgeText, { color: themeColors.primary }]}>
+              {isRTL ? 'مرحلہ ۲' : 'STEP 2'}
+            </Text>
           </View>
-          <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
+          <Text style={[styles.cardTitle, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
             {isRTL ? 'فوراً واجب الادا قرضے منہا کریں' : 'Deducting Short-Term Liabilities'}
           </Text>
-          <Text style={[styles.cardBody, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.cardBody, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {isRTL
               ? 'اپنے فوری ادا کرنے والے قرضے اور واجبات کل رقم سے منہا کریں تا کہ خالص مالیت معلوم ہو سکے۔'
               : 'Deduct short-term debts, due utility bills, or immediate liabilities from your gross wealth.'}
@@ -52,13 +56,15 @@ export const CalculatedZakatExplanationScreen = ({ onBack }) => {
 
         {/* Step 3: Nisab Check & 2.5% Rate */}
         <View style={[styles.stepCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
-          <View style={[styles.stepBadge, { backgroundColor: themeColors.primaryLight }]}>
-            <Text style={[styles.stepBadgeText, { color: themeColors.primary }]}>STEP 3</Text>
+          <View style={[styles.stepBadge, { backgroundColor: themeColors.primaryLight }, isRTL && styles.rtlSelf]}>
+            <Text style={[styles.stepBadgeText, { color: themeColors.primary }]}>
+              {isRTL ? 'مرحلہ ۳' : 'STEP 3'}
+            </Text>
           </View>
-          <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
+          <Text style={[styles.cardTitle, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
             {isRTL ? 'نصاب کی جانچ اور 2.5% کا حساب' : 'Nisab Check & 2.5% Calculation'}
           </Text>
-          <Text style={[styles.cardBody, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.cardBody, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {isRTL
               ? 'اگر خالص مالیت نصاب سے زیادہ ہے تو کل خالص رقم کا 2.5% (1/40 واں حصہ) بطور زکوٰۃ ادا کیا جاتا ہے۔'
               : 'If net wealth exceeds the silver/gold Nisab threshold, exactly 2.5% (1/40th) is calculated as your payable Zakat.'}
@@ -87,6 +93,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
+  rtlRow: { flexDirection: 'row-reverse' },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   backText: { fontSize: 15, fontWeight: '700' },
   headerTitle: { fontSize: 18, fontWeight: '800' },
@@ -99,6 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
   },
+  rtlSelf: { alignSelf: 'flex-end' },
   stepBadgeText: { fontSize: 12, fontWeight: '800' },
   cardTitle: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
   cardBody: { fontSize: 14, lineHeight: 22 },
@@ -113,4 +121,5 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   formulaText: { fontSize: 15, fontWeight: '800' },
+  rtlText: { textAlign: 'right' },
 });

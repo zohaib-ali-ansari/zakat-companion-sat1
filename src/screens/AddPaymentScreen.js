@@ -1,47 +1,303 @@
-import { Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
-import { colors } from '../theme/colors';
+import React, { useState } from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  StatusBar,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useLanguage } from '../context/LanguageContext';
+import { useZakat } from '../context/ZakatContext';
 
 export default function AddPaymentScreen({ onBack }) {
+  const { t, themeColors, isRTL } = useLanguage();
+  const { addPayment } = useZakat();
+
+  const getTodayFormatted = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const [date, setDate] = useState(getTodayFormatted());
+  const [amount, setAmount] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [notes, setNotes] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = () => {
+    setErrorMessage('');
+    const parsedAmount = parseFloat(amount);
+    if (!parsedAmount || parsedAmount <= 0 || !recipient.trim()) {
+      setErrorMessage(t('fillRequiredFieldsError'));
+      return;
+    }
+
+    const success = addPayment({
+      date,
+      amount: parsedAmount,
+      recipient,
+      notes,
+    });
+
+    if (success) {
+      onBack?.();
+    } else {
+      setErrorMessage(t('fillRequiredFieldsError'));
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Add Payment</Text>
-      <Text style={styles.subtitle}>Record a payment toward your Zakat obligation.</Text>
-      <Pressable style={styles.button} onPress={() => onBack?.()}>
-        <Text style={styles.buttonText}>BACK TO TRACK</Text>
-      </Pressable>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
+
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
+          onPress={() => onBack?.()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={themeColors.primary} />
+        </TouchableOpacity>
+        <Text style={[styles.topHeaderTitle, { color: themeColors.textPrimary }]}>
+          {t('addPaymentTitle')}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.titleSection}>
+          <Text style={[styles.title, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+            {t('addPaymentTitle')}
+          </Text>
+          <Text style={[styles.subtitle, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
+            {t('addPaymentSub')}
+          </Text>
+        </View>
+
+        {errorMessage ? (
+          <View style={[styles.errorBox, { backgroundColor: themeColors.cardBgAlt, borderColor: themeColors.danger }]}>
+            <Ionicons name="alert-circle" size={20} color={themeColors.danger} />
+            <Text style={[styles.errorText, { color: themeColors.danger }]}>{errorMessage}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.formGroup}>
+          {/* Date Input */}
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+            {t('dateLabel')}
+          </Text>
+          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+            <Ionicons name="calendar-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+              placeholder={t('datePlaceholder')}
+              placeholderTextColor={themeColors.textMuted}
+              value={date}
+              onChangeText={setDate}
+            />
+          </View>
+
+          {/* Amount Input */}
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+            {t('amountLabel')} *
+          </Text>
+          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+            <Ionicons name="cash-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+              placeholder={t('amountPlaceholder')}
+              placeholderTextColor={themeColors.textMuted}
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="numeric"
+            />
+          </View>
+
+          {/* Recipient / Who's to paid Input */}
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+            {t('recipientLabel')} *
+          </Text>
+          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+            <Ionicons name="person-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+              placeholder={t('recipientPlaceholder')}
+              placeholderTextColor={themeColors.textMuted}
+              value={recipient}
+              onChangeText={setRecipient}
+            />
+          </View>
+
+          {/* Notes / Description Input */}
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+            {t('notesLabel')}
+          </Text>
+          <View style={[styles.inputWrapper, styles.multilineWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+            <Ionicons name="document-text-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, styles.multilineInput, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+              placeholder={t('notesPlaceholder')}
+              placeholderTextColor={themeColors.textMuted}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+            />
+          </View>
+        </View>
+
+        {/* Submit & Cancel Buttons */}
+        <TouchableOpacity
+          style={[styles.submitButton, { backgroundColor: themeColors.primary }]}
+          onPress={handleSubmit}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+          <Text style={styles.submitButtonText}>{t('submitPaymentBtn')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.cancelButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
+          onPress={() => onBack?.()}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.cancelButtonText, { color: themeColors.textSecondary }]}>
+            {t('cancelBtn')}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    padding: 24,
+  },
+  topHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+  },
+  topHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  container: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  titleSection: {
+    marginTop: 10,
+    marginBottom: 20,
   },
   title: {
-    color: colors.textPrimary,
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
-    fontSize: 18,
-    lineHeight: 26,
-    marginTop: 12,
-    marginBottom: 28,
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 6,
   },
-  button: {
-    minHeight: 56,
+  rtlText: {
+    textAlign: 'right',
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  formGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    paddingHorizontal: 14,
+    height: 52,
+  },
+  multilineWrapper: {
+    height: 84,
+    alignItems: 'flex-start',
+    paddingVertical: 12,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  multilineInput: {
+    textAlignVertical: 'top',
+  },
+  rtlInput: {
+    textAlign: 'right',
+  },
+  submitButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
-    backgroundColor: colors.primaryDark,
+    minHeight: 56,
+    borderRadius: 28,
+    gap: 8,
+    shadowColor: '#1A4FD6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: 12,
   },
-  buttonText: {
-    color: colors.textWhite,
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+  },
+  cancelButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+    borderRadius: 25,
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
