@@ -42,3 +42,4 @@ env/
 /ios
 /android
 /env
+.env
