@@ -1,24 +1,47 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
-export const ForgotPasswordScreen = ({ onNavigateLogin }) => {
+export const ForgotPasswordScreen = ({ onNavigateLogin, onSendResetRequest, isLoading = false, submitError = '' }) => {
   const { t, themeColors, isRTL } = useLanguage();
   const [email, setEmail] = useState('');
   const [isSent, setIsSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(submitError || '');
 
-  const handleSend = () => {
-    if (email.trim()) {
+  useEffect(() => {
+    if (submitError) {
+      setErrorMessage(submitError);
+    }
+  }, [submitError]);
+
+  const handleSend = async () => {
+    const trimmedEmail = email.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!trimmedEmail) {
+      setErrorMessage('Please enter your email address.');
+      return;
+    }
+
+    if (!emailPattern.test(trimmedEmail)) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+
+    setErrorMessage('');
+    const result = await onSendResetRequest?.(trimmedEmail);
+    if (result?.success) {
       setIsSent(true);
     }
   };
@@ -48,25 +71,35 @@ export const ForgotPasswordScreen = ({ onNavigateLogin }) => {
             <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
               {t('emailLabel')}
             </Text>
-            <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+            <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border }]}>
               <Ionicons name="mail-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
                 placeholder={t('emailPlaceholder')}
                 placeholderTextColor={themeColors.textMuted}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(value) => {
+                  setEmail(value);
+                  if (errorMessage) setErrorMessage('');
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
             </View>
 
+            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
             <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: themeColors.primary }]}
+              style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
               onPress={handleSend}
               activeOpacity={0.85}
+              disabled={isLoading}
             >
-              <Text style={styles.submitBtnText}>{t('sendResetLinkBtn')}</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.submitBtnText}>{t('sendResetLinkBtn')}</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -164,6 +197,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '700',
+  },
+  errorText: {
+    color: '#E11D48',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 16,
   },
   successCard: {
     flexDirection: 'row',
