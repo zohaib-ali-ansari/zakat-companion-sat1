@@ -71,8 +71,22 @@ export const translations = {
     historyAction: 'History',
     
     // Status Banner
-    statusLabel: 'Status',
-    nisabComplete: 'Nisab Completed',
+    
+    
+    statusLabel: '\u062D\u06CC\u062B\u06CC\u062A',
+    nisabComplete: '\u0646\u0635\u0627\u0628 \u0645\u06A9\u0645\u0644',
+    nisabMetStatus: '\u0646\u0635\u0627\u0628 \u0645\u06A9\u0645\u0644 (\u0632\u06A9\u0648\u0670\u0629 \u0648\u0627\u062C\u0628 \u06C1\u06D2)',
+    nisabNotMetStatus: '\u0646\u0635\u0627\u0628 \u0633\u06D2 \u06A9\u0645 (\u0632\u06A9\u0648\u0670\u0629 \u0648\u0627\u062C\u0628 \u0646\u06C1\u06CC\u06BA)',
+    nisabThresholdLabel: '\u0686\u0627\u0646\u062F\u06CC \u06A9\u0627 \u0646\u0635\u0627\u0628',
+    businessInventory: '\u06A9\u0627\u0631\u0648\u0628\u0627\u0631\u06CC \u0645\u0627\u0644\u0650 \u062A\u062C\u0627\u0631\u062A',
+    propertyAssets: '\u062C\u0627\u0626\u06CC\u062F\u0627\u062F / \u06A9\u0631\u0627\u06CC\u06C1',
+    liabilitiesDeduction: '\u0648\u0627\u062C\u0628 \u0627\u0644\u0627\u062F\u0627 \u0642\u0631\u0636\u06D2',
+    nisabMetStatus: 'Nisab Reached (Zakat Mandatory)',
+    nisabNotMetStatus: 'Below Nisab Threshold (No Zakat Due)',
+    nisabThresholdLabel: 'Silver Nisab Standard',
+    businessInventory: 'Business Inventory',
+    propertyAssets: 'Rental / Real Estate',
+    liabilitiesDeduction: 'Liabilities (Debts)',
     
     // Assets Section
     assetDetailsTitle: 'Asset Details',

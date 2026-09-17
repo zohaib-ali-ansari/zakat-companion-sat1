@@ -1,6 +1,6 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 import { Header } from '../components/Header';
@@ -11,7 +11,7 @@ import { AssetItem } from '../components/AssetItem';
 
 export const DashboardScreen = ({ onOpenSettings, onNavigateTab }) => {
   const { t, isRTL, themeColors, language } = useLanguage();
-  const { currentUser } = useZakat();
+  const { currentUser, assetsBreakdown } = useZakat();
 
   // Dynamic user display name from profile / logged in user
   const rawName = currentUser?.name?.trim();
@@ -20,8 +20,18 @@ export const DashboardScreen = ({ onOpenSettings, onNavigateTab }) => {
   // Format greeting with proper separator based on language
   const prefix = t('greetingPrefix') || (language === 'ur' ? '\u0627\u0644\u0633\u0644\u0627\u0645 \u0639\u0644\u064A\u0643\u0645' : 'Assalamu Alaikum');
   const greetingText = language === 'ur' 
-    ? `${prefix}\u060C ${displayName}` 
-    : `${prefix}, ${displayName}`;
+    ? (prefix + '، ' + displayName) 
+    : (prefix + ', ' + displayName);
+
+  // Dynamic calculated asset values from state
+  const goldSilverTotal = (assetsBreakdown?.goldVal || 0) + (assetsBreakdown?.silverVal || 0);
+  const cashTotal = (assetsBreakdown?.cashHand || 0) + (assetsBreakdown?.bankSavings || 0);
+  const stockTotal = assetsBreakdown?.stockVal || 0;
+  const businessTotal = assetsBreakdown?.businessVal || 0;
+  const propertyTotal = assetsBreakdown?.propertyVal || 0;
+  const liabilitiesTotal = assetsBreakdown?.liabilitiesVal || 0;
+
+  const formatPKR = (num) => 'PKR ' + Number(num || 0).toLocaleString('en-US');
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
@@ -70,16 +80,34 @@ export const DashboardScreen = ({ onOpenSettings, onNavigateTab }) => {
           <View style={[styles.assetsCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
             <AssetItem
               label={t('goldSilver')}
-              value={t('goldSilverValue')}
+              value={formatPKR(goldSilverTotal)}
             />
             <AssetItem
               label={t('cashInBank')}
-              value={t('cashInBankValue')}
+              value={formatPKR(cashTotal)}
             />
             <AssetItem
               label={t('investments')}
-              value={t('investmentsValue')}
+              value={formatPKR(stockTotal)}
             />
+            {businessTotal > 0 && (
+              <AssetItem
+                label={t('businessInventory') || 'Business Inventory'}
+                value={formatPKR(businessTotal)}
+              />
+            )}
+            {propertyTotal > 0 && (
+              <AssetItem
+                label={t('propertyAssets') || 'Rental / Real Estate'}
+                value={formatPKR(propertyTotal)}
+              />
+            )}
+            {liabilitiesTotal > 0 && (
+              <AssetItem
+                label={t('liabilitiesDeduction') || 'Liabilities (Debts)'}
+                value={'- ' + formatPKR(liabilitiesTotal)}
+              />
+            )}
           </View>
         </View>
 

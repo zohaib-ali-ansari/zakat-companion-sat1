@@ -17,7 +17,7 @@ import { Header } from '../components/Header';
 
 export const CalculatorScreen = ({ onOpenSettings }) => {
   const { t, themeColors, isRTL } = useLanguage();
-  const { updateTotalDue, saveCalculationSnapshot, metalRates } = useZakat();
+  const { updateTotalDue, saveCalculationSnapshot, updateAssetsBreakdown, metalRates, assetsBreakdown } = useZakat();
 
   // Active Category Toggles
   const [selectedCategories, setSelectedCategories] = useState({
@@ -70,6 +70,18 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
       isNisabMet,
       zakatPayable,
     });
+    if (updateAssetsBreakdown) {
+      updateAssetsBreakdown({
+        goldVal,
+        silverVal,
+        cashHand,
+        bankSavings,
+        stockVal,
+        propertyVal,
+        businessVal,
+        liabilitiesVal,
+      });
+    }
     setIsSaved(false);
   };
 

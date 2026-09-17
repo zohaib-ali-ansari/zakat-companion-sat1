@@ -45,6 +45,22 @@ const INITIAL_RECORDS = [
   },
 ];
 
+const INITIAL_ASSETS = {
+  goldVal: 1250000,
+  silverVal: 0,
+  cashHand: 300000,
+  bankSavings: 500000,
+  stockVal: 450000,
+  propertyVal: 0,
+  businessVal: 0,
+  liabilitiesVal: 100000,
+  totalAssets: 2500000,
+  netZakatableWealth: 2400000,
+  silverNisabThreshold: 174523,
+  isNisabMet: true,
+  zakatPayable: 60000,
+};
+
 export const ZakatProvider = ({ children, token, user }) => {
   const [authToken, setAuthToken] = useState(token || null);
   const [currentUser, setCurrentUser] = useState(user || null);
@@ -55,6 +71,7 @@ export const ZakatProvider = ({ children, token, user }) => {
   const [nisabDate, setNisabDate] = useState('12 Ramadan 1445');
   const [metalRates, setMetalRates] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [assetsBreakdown, setAssetsBreakdown] = useState(INITIAL_ASSETS);
 
   // Sync token prop changes
   useEffect(() => {
@@ -69,6 +86,13 @@ export const ZakatProvider = ({ children, token, user }) => {
       const ratesData = await fetchMetalRates();
       if (ratesData) {
         setMetalRates(ratesData);
+        if (ratesData?.nisab?.silverThreshold) {
+          setAssetsBreakdown((prev) => ({
+            ...prev,
+            silverNisabThreshold: ratesData.nisab.silverThreshold,
+            isNisabMet: (prev.netZakatableWealth || 0) >= ratesData.nisab.silverThreshold,
+          }));
+        }
       }
     } catch (e) {
       console.log('Metal rates fallback used:', e.message);
@@ -117,13 +141,52 @@ export const ZakatProvider = ({ children, token, user }) => {
     return Math.min(100, Math.round((totalPaid / totalDue) * 100));
   }, [totalDue, totalPaid]);
 
+  const updateAssetsBreakdown = (values) => {
+    const gold = parseFloat(values.goldVal) || 0;
+    const silver = parseFloat(values.silverVal) || 0;
+    const cashHand = parseFloat(values.cashHand) || 0;
+    const bankSavings = parseFloat(values.bankSavings) || 0;
+    const cash = cashHand + bankSavings;
+    const stocks = parseFloat(values.stockVal) || 0;
+    const property = parseFloat(values.propertyVal) || 0;
+    const business = parseFloat(values.businessVal) || 0;
+    const liabilities = parseFloat(values.liabilitiesVal) || 0;
+
+    const totalAssets = gold + silver + cash + stocks + property + business;
+    const netZakatableWealth = Math.max(0, totalAssets - liabilities);
+    const silverNisabThreshold = metalRates?.nisab?.silverThreshold || 174523;
+    const isNisabMet = netZakatableWealth >= silverNisabThreshold;
+    const zakatPayable = isNisabMet ? netZakatableWealth * 0.025 : 0;
+
+    const updated = {
+      goldVal: gold,
+      silverVal: silver,
+      cashHand,
+      bankSavings,
+      cash,
+      stockVal: stocks,
+      propertyVal: property,
+      businessVal: business,
+      liabilitiesVal: liabilities,
+      totalAssets,
+      netZakatableWealth,
+      silverNisabThreshold,
+      isNisabMet,
+      zakatPayable,
+    };
+
+    setAssetsBreakdown(updated);
+    setTotalDue(zakatPayable);
+    return updated;
+  };
+
   const addPayment = async ({ date, amount, recipient, notes, category = 'Zakat' }) => {
     const numericAmount = parseFloat(amount) || 0;
     if (numericAmount <= 0 || !recipient?.trim()) {
       return false;
     }
 
-    const tempId = `payment-${Date.now()}`;
+    const tempId = 'payment-' + Date.now();
     const newRecord = {
       id: tempId,
       _id: tempId,
@@ -135,10 +198,8 @@ export const ZakatProvider = ({ children, token, user }) => {
       status: 'Paid',
     };
 
-    // Optimistic local update
     setRecords((prev) => [newRecord, ...prev]);
 
-    // Backend sync if token present
     if (authToken) {
       try {
         const saved = await createPaymentRecord(
@@ -261,6 +322,9 @@ export const ZakatProvider = ({ children, token, user }) => {
   };
 
   const saveCalculationSnapshot = async (calculationData) => {
+    if (calculationData?.values) {
+      updateAssetsBreakdown(calculationData.values);
+    }
     if (authToken) {
       try {
         const res = await saveZakatCalculation(calculationData, authToken);
@@ -292,6 +356,8 @@ export const ZakatProvider = ({ children, token, user }) => {
         isSyncing,
         authToken,
         currentUser,
+        assetsBreakdown,
+        updateAssetsBreakdown,
         setAuthToken,
         setCurrentUser,
         refreshData,
