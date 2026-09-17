@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
+import { useZakat } from '../context/ZakatContext';
 import { SettingRow } from '../components/SettingRow';
+import { updateUserProfile } from '../services/authApi';
 
 export const ProfileSettingsScreen = ({
   onClose,
@@ -13,14 +15,27 @@ export const ProfileSettingsScreen = ({
   onOpenExplanation,
 }) => {
   const { t, language, setLanguage, isDarkMode, toggleDarkMode, themeColors, isRTL } = useLanguage();
+  const { currentUser, authToken, setCurrentUser } = useZakat();
+
   const [pushNotifications, setPushNotifications] = React.useState(true);
   const [zakatReminders, setZakatReminders] = React.useState(true);
-  const [avatarIndex, setAvatarIndex] = React.useState(0);
+  const [avatarIndex, setAvatarIndex] = React.useState(currentUser?.avatar ?? 0);
 
   const avatars = ['wallet', 'person', 'star', 'sparkles'];
 
-  const cycleAvatar = () => {
-    setAvatarIndex((prev) => (prev + 1) % avatars.length);
+  const cycleAvatar = async () => {
+    const nextIndex = (avatarIndex + 1) % avatars.length;
+    setAvatarIndex(nextIndex);
+    if (authToken) {
+      try {
+        const updated = await updateUserProfile({ avatar: nextIndex }, authToken);
+        if (updated && setCurrentUser) {
+          setCurrentUser(updated);
+        }
+      } catch (e) {
+        console.warn('Avatar update sync notice:', e.message);
+      }
+    }
   };
 
   return (
@@ -62,10 +77,10 @@ export const ProfileSettingsScreen = ({
           </TouchableOpacity>
 
           <Text style={[styles.profileTitle, { color: themeColors.textPrimary }]}>
-            {t('userName')}
+            {currentUser?.name || t('userName')}
           </Text>
           <Text style={[styles.userEmail, { color: themeColors.textSecondary }]}>
-            {t('userEmail')}
+            {currentUser?.email || t('userEmail')}
           </Text>
           <Text style={[styles.avatarHint, { color: themeColors.primary }]}>
             {t('changeAvatar')}

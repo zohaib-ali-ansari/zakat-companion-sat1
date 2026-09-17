@@ -57,7 +57,9 @@ export const translations = {
     themeDark: 'Dark Mode',
     
     // Home Dashboard Screen
-    greeting: 'Assalamu Alaikum, Hamza',
+    greetingPrefix: 'Assalamu Alaikum',
+    greeting: 'Assalamu Alaikum',
+    userName: 'Hamza Khan',
     greetingSub: 'Your Zakat calculation is up to date.',
     remainingZakatLabel: 'Remaining Zakat',
     remainingZakatValue: 'PKR 340,000',
@@ -162,6 +164,34 @@ export const translations = {
     deleteSuccess: 'Record deleted successfully.',
     editAction: 'Edit',
     deleteAction: 'Delete',
+    // Settings Screen & Profile Edit
+    profileTitle: 'Profile & Settings',
+    userName: 'Hamza Khan',
+    userEmail: 'hamza@example.com',
+    changeAvatar: 'Change Avatar',
+    
+    // Settings Sections
+    sectionPreferences: 'PREFERENCES',
+    settingLanguage: 'Language',
+    settingDarkTheme: 'Dark Theme',
+    
+    sectionNotifications: 'NOTIFICATIONS',
+    settingPushNotifications: 'Push Notifications',
+    settingZakatReminders: 'Zakat Reminders',
+    
+    sectionSupportLegal: 'SUPPORT & LEGAL',
+    settingZakatGuidance: 'Zakat Guidance',
+    settingPrivacyPolicy: 'Privacy Policy',
+    settingTermsOfService: 'Terms of Service',
+    settingCalculatedZakatExplanation: 'Calculated Zakat Explanation',
+    
+    signOut: 'Sign Out',
+    // Navigation Tabs
+    navHome: 'Home',
+    navCalculator: 'Calculator',
+    navTrack: 'Track',
+    navHistory: 'History',
+    navAssistant: 'Assistant',
   },
   
   ur: {
@@ -222,7 +252,8 @@ export const translations = {
     themeDark: 'ڈارک موڈ',
     
     // Home Dashboard Screen
-    greeting: 'السلام علیکم، حمزہ',
+    greetingPrefix: 'السلام علیکم',
+    greeting: 'السلام علیکم',
     greetingSub: 'آپ کا زکوٰۃ کا حساب کتاب اپ ٹو ڈیٹ ہے۔',
     remainingZakatLabel: 'باقی زکوٰۃ',
     remainingZakatValue: 'PKR 340,000',

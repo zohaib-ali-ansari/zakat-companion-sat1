@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
+import { useZakat } from '../context/ZakatContext';
 import { Header } from '../components/Header';
 import { SummaryCard } from '../components/SummaryCard';
 import { QuickActionGrid } from '../components/QuickActionCard';
@@ -8,7 +9,18 @@ import { StatusBanner } from '../components/StatusBanner';
 import { AssetItem } from '../components/AssetItem';
 
 export const DashboardScreen = ({ onOpenSettings, onNavigateTab }) => {
-  const { t, isRTL, themeColors } = useLanguage();
+  const { t, isRTL, themeColors, language } = useLanguage();
+  const { currentUser } = useZakat();
+
+  // Dynamic user display name from profile / logged in user
+  const rawName = currentUser?.name?.trim();
+  const displayName = rawName || t('userName') || (language === 'ur' ? '\u062D\u0645\u0632\u06C1' : 'Hamza');
+  
+  // Format greeting with proper separator based on language
+  const prefix = t('greetingPrefix') || (language === 'ur' ? '\u0627\u0644\u0633\u0644\u0627\u0645 \u0639\u0644\u064A\u0643\u0645' : 'Assalamu Alaikum');
+  const greetingText = language === 'ur' 
+    ? `${prefix}\u060C ${displayName}` 
+    : `${prefix}, ${displayName}`;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
@@ -25,7 +37,7 @@ export const DashboardScreen = ({ onOpenSettings, onNavigateTab }) => {
         {/* User Greeting Section */}
         <View style={[styles.greetingContainer, isRTL && styles.rtlAlign]}>
           <Text style={[styles.greetingText, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('greeting')}
+            {greetingText}
           </Text>
           <Text style={[styles.greetingSubText, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {t('greetingSub')}

@@ -6,7 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { BottomNavigation } from './src/components/BottomNavigation';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
-import { ZakatProvider } from './src/context/ZakatContext';
+import { ZakatProvider, useZakat } from './src/context/ZakatContext';
 import AddPaymentScreen from './src/screens/AddPaymentScreen';
 import { AssistantScreen } from './src/screens/AssistantScreen';
 import { CalculatedZakatExplanationScreen } from './src/screens/CalculatedZakatExplanationScreen';
@@ -30,6 +30,7 @@ import { forgotPassword, loginUser, registerUser, resetPassword } from './src/se
 
 function MainAppContent() {
   const { themeColors } = useLanguage();
+  const { setAuthToken, setCurrentUser } = useZakat();
 
   const [authFlow, setAuthFlow] = useState('splash');
   const [activeTab, setActiveTab] = useState('home');
@@ -105,6 +106,8 @@ function MainAppContent() {
     try {
       const result = await loginUser(trimmedEmail, trimmedPassword);
       if (result?.token) {
+        setAuthToken(result.token);
+        if (result.user) setCurrentUser(result.user);
         setAuthFlow('app');
       }
     } catch (error) {
@@ -297,7 +300,11 @@ function MainAppContent() {
     return (
       <ProfileSettingsScreen
         onClose={() => setActiveTab('home')}
-        onSignOut={() => setAuthFlow('login')}
+        onSignOut={() => {
+          setAuthToken(null);
+          setCurrentUser(null);
+          setAuthFlow('login');
+        }}
         onOpenPrivacy={() => setActiveTab('privacy')}
         onOpenTerms={() => setActiveTab('terms')}
         onOpenGuidance={() => setActiveTab('guidance')}

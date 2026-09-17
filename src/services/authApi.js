@@ -5,7 +5,7 @@ const getApiBaseUrl = () => {
     return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '');
   }
 
-  const host = Platform.OS === 'android' ? '10.0.2.2' : '192.168.0.104';
+  const host = Platform.OS === 'web' ? 'localhost' : '192.168.0.104';
   return `http://${host}:5000/api`;
 };
 
@@ -94,3 +94,39 @@ export const loginUser = async (email, password) => {
 
   return data;
 };
+
+export const getUserProfile = async (token) => {
+  const response = await fetch(`${api}/user/profile`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to fetch user profile');
+  }
+
+  return data.user;
+};
+
+export const updateUserProfile = async (updates, token) => {
+  const response = await fetch(`${api}/user/profile`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to update user profile');
+  }
+
+  return data.user;
+};
+

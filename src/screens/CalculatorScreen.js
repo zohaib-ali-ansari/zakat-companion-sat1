@@ -17,7 +17,7 @@ import { Header } from '../components/Header';
 
 export const CalculatorScreen = ({ onOpenSettings }) => {
   const { t, themeColors, isRTL } = useLanguage();
-  const { updateTotalDue } = useZakat();
+  const { updateTotalDue, saveCalculationSnapshot, metalRates } = useZakat();
 
   // Active Category Toggles
   const [selectedCategories, setSelectedCategories] = useState({
@@ -58,7 +58,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
 
     const totalAssets = gold + silver + cash + stocks + property + business;
     const netZakatableWealth = Math.max(0, totalAssets - liabilities);
-    const nisabThreshold = 270000; // Approx 52.5 Tolas Silver value in PKR
+    const nisabThreshold = metalRates?.nisab?.silverThreshold || 174523;
     const isNisabMet = netZakatableWealth >= nisabThreshold;
     const zakatPayable = isNisabMet ? netZakatableWealth * 0.025 : 0;
 
@@ -73,15 +73,29 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
     setIsSaved(false);
   };
 
-  const handleSaveToHistory = () => {
-    if (calculated && calculated.zakatPayable > 0) {
+  const handleSaveToHistory = async () => {
+    if (calculated && calculated.zakatPayable >= 0) {
       updateTotalDue(calculated.zakatPayable);
+      await saveCalculationSnapshot({
+        selectedCategories,
+        values: {
+          goldVal: parseFloat(goldVal) || 0,
+          silverVal: parseFloat(silverVal) || 0,
+          cashHand: parseFloat(cashHand) || 0,
+          bankSavings: parseFloat(bankSavings) || 0,
+          stockVal: parseFloat(stockVal) || 0,
+          propertyVal: parseFloat(propertyVal) || 0,
+          businessVal: parseFloat(businessVal) || 0,
+          liabilitiesVal: parseFloat(liabilitiesVal) || 0,
+        },
+        currency: 'PKR',
+      });
       setIsSaved(true);
       Alert.alert(
         t('appTitle'),
         isRTL
           ? 'آپ کی زکوٰۃ کی کل مقدار ٹریکر میں اپ ڈیٹ ہو گئی ہے!'
-          : 'Your total Zakat due has been updated in the tracker!'
+          : 'Your total Zakat calculation has been saved and updated in the tracker!'
       );
     }
   };
