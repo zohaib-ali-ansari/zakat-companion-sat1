@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 import { Header } from '../components/Header';

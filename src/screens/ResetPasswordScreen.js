@@ -1,9 +1,9 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -11,6 +11,10 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+} KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
 } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -71,7 +75,12 @@ export const ResetPasswordScreen = ({
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         <View style={styles.headerBox}>
           <View
             style={[
@@ -164,6 +173,7 @@ export const ResetPasswordScreen = ({
           <Text style={[styles.backBtnText, { color: themeColors.primary }]}>Back to login</Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

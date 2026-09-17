@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, StatusBar } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, StatusBar } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 

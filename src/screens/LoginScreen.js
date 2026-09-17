@@ -1,8 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -10,6 +10,10 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+} KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
 } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -56,7 +60,12 @@ export const LoginScreen = ({ onLoginSuccess, onNavigateSignUp, onNavigateForgot
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         
         {/* Top Header Card */}
         <View style={styles.headerBox}>
@@ -149,6 +158,7 @@ export const LoginScreen = ({ onLoginSuccess, onNavigateSignUp, onNavigateForgot
         </View>
 
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

@@ -1,8 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -10,6 +10,10 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+} KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
 } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -111,6 +115,7 @@ export const ForgotPasswordScreen = ({ onNavigateLogin, onSendResetRequest, isLo
           </Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
