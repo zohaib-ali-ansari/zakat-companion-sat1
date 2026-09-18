@@ -91,8 +91,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   segmentedContainer: {
     flexDirection: 'row',

@@ -124,13 +124,13 @@ export const translations = {
     recipientPlaceholder: 'e.g. Alkhidmat Foundation, Family, Needy',
     notesLabel: 'Notes / Description (Optional)',
     notesPlaceholder: 'Add optional notes or reference',
-    submitPaymentBtn: 'CONFIRM PAYMENT',
-    cancelBtn: 'CANCEL',
+    submitPaymentBtn: 'Confirm Payment',
+    cancelBtn: 'Cancel',
     fillRequiredFieldsError: 'Please enter a valid amount and recipient name.',
 
     // History Screens
     pastYearsHistory: 'Past Years History',
-    viewAllPayments: 'VIEW ALL PAYMENTS',
+    viewAllPayments: 'View All Payments',
     allPaymentsTitle: 'All Payments',
     annualSummaryTitle: 'Annual Zakat Summary',
     dateHeader: 'Date',
@@ -142,7 +142,7 @@ export const translations = {
     deletePayment: 'Delete',
     editPaymentTitle: 'Edit Payment',
     editPaymentSub: 'Update the details of your Zakat payment below.',
-    updatePaymentBtn: 'UPDATE PAYMENT',
+    updatePaymentBtn: 'Update Payment',
     confirmDeletePayment: 'Are you sure you want to delete this payment record?',
     confirmDeleteYear: 'Are you sure you want to delete all history records for this year?',
     deleteYearBtn: 'Delete Year Record',
@@ -151,8 +151,101 @@ export const translations = {
     deleteSuccess: 'Record deleted successfully.',
     editAction: 'Edit',
     deleteAction: 'Delete',
+
+    // Assistant Screen
+    assistantTitle: 'Zakat Assistant',
+    assistantTagline: '🔒 100% Private (On-Device Local Processing)',
+    youTag: 'YOU',
+    aiTag: 'ZAKAT ASSISTANT',
+    typingText: 'AI Assistant is typing...',
+    micPrompt: 'Ask or tap mic to speak...',
+    sendBtn: 'Send',
+    disclaimerText: 'Zakat Assistant may produce inaccurate information about complex cases. Consult a scholar for official rulings.',
+    welcomeMessage: 'As-salamu alaykum. I am your Zakat Assistant. How can I help you with your Zakat rules or calculations today?',
+
+    // Settings Screen & Profile Edit
+    profileTitle: 'Settings & Profile',
+    userName: 'Hamza Khan',
+    userEmail: 'abdullah@example.com',
+    changeAvatar: 'Change Photo',
+
+    // Settings Sections
+    sectionPreferences: 'Preferences',
+    settingLanguage: 'Language',
+    settingDarkTheme: 'Dark Theme',
+
+    sectionNotifications: 'Notifications',
+    settingPushNotifications: 'Push Notifications',
+    settingZakatReminders: 'Zakat Reminders',
+
+    sectionSupportLegal: 'Support & Legal',
+    settingZakatGuidance: 'Zakat Guidance',
+    settingPrivacyPolicy: 'Privacy Policy',
+    settingTermsOfService: 'Terms of Service',
+    settingCalculatedZakatExplanation: 'Zakat Calculation Explanation',
+
+    signOut: 'Sign Out',
+
+    // Navigation Tabs
+    navHome: 'Home',
+    navCalculator: 'Calculator',
+    navTrack: 'Track',
+    navHistory: 'History',
+    navAssistant: 'Assistant',
+
+    // Content Screens
+    privacyPolicyTitle: 'Privacy Policy',
+    termsOfServiceTitle: 'Terms of Service',
+    zakatGuidanceTitle: 'Zakat Guidance',
+    zakatExplanationTitle: 'Zakat Calculation Explanation',
+    backBtn: 'Back',
+
+    // Disaster Relief & Current Needs (USP)
+    disasterReliefTitle: 'Current Needs & Relief',
+    disasterReliefSub: 'Verified emergency campaigns and humanitarian Zakat needs.',
+    urgentBadge: 'URGENT',
+    contributeZakatBtn: 'Contribute Zakat',
+    raisedOfGoal: 'raised of',
+    campaignDetails: 'Campaign Details',
+    organization: 'Organization',
+    category: 'Category',
+
+    // Organization Portal (USP)
+    orgPortalTitle: 'Organization Portal',
+    orgPortalSub: 'Manage and publish verified emergency Zakat campaigns.',
+    createCampaignBtn: 'Create Campaign',
+    campaignTitleLabel: 'Campaign Title',
+    goalAmountLabel: 'Target Goal Amount (PKR)',
+    orgNameLabel: 'Organization Name',
+    descriptionLabel: 'Campaign Description',
+    publishCampaignBtn: 'Publish Campaign',
+    campaignCreatedSuccess: 'Emergency campaign published successfully!',
+
+    // Live Assets Rates (USP)
+    liveRatesTitle: 'Live Market Rates',
+    liveRatesSub: 'Real-time gold, silver, currency rates and Nisab benchmarks.',
+    goldRateLabel: 'Gold (24K per Tola)',
+    silverRateLabel: 'Silver (24K per Tola)',
+    usdRateLabel: 'USD to PKR Rate',
+    applyRatesBtn: 'Apply Live Rates to Calculator',
+    ratesAppliedSuccess: 'Live Nisab & Market Rates applied to Calculator!',
+    nisabGoldLabel: 'Gold Nisab (7.5 Tolas)',
+    nisabSilverLabel: 'Silver Nisab (52.5 Tolas)',
+
+    // PDF / CSV Report Export
+    exportReportBtn: 'Export Report',
+    pdfReportTitle: 'Zakat Annual Summary Report',
+    downloadPdfBtn: 'Download PDF Report',
+    exportCsvBtn: 'Export CSV Spreadsheet',
+    reportGeneratedSuccess: 'Report generated successfully!',
+
+    // History Snapshot & Detail Fix
+    assetSnapshotTitle: 'Historical Asset Snapshot',
+    totalAssetsLabel: 'Total Eligible Assets',
+    netWealthLabel: 'Net Zakatable Wealth',
   },
-  
+
+
   ur: {
     // Language Selection Screen
     selectLanguageTitle: 'زبان منتخب کریں',
@@ -353,6 +446,50 @@ export const translations = {
     zakatGuidanceTitle: 'زکوٰۃ کی رہنمائی',
     zakatExplanationTitle: 'زکوٰۃ حساب کی وضاحت',
     backBtn: 'واپس',
+
+    // Disaster Relief & Current Needs (USP)
+    disasterReliefTitle: 'حالیہ ضروریات و امدادی مہمات',
+    disasterReliefSub: 'تصدیق شدہ ہنگامی مہمات اور انسان دوست زکوٰۃ کی ضروریات۔',
+    urgentBadge: 'ہنگامی',
+    contributeZakatBtn: 'زکوٰۃ کی ادائیگی کریں',
+    raisedOfGoal: 'جمع شدہ از کل ہدف',
+    campaignDetails: 'مہم کی تفصیلات',
+    organization: 'ادارہ',
+    category: 'زمرہ',
+
+    // Organization Portal (USP)
+    orgPortalTitle: 'آرگنائزیشن پورٹل',
+    orgPortalSub: 'تصدیق شدہ ہنگامی زکوٰۃ مہمات کا انتظام اور اشاعت کریں۔',
+    createCampaignBtn: 'نئی مہم بنائیں',
+    campaignTitleLabel: 'مہم کا عنوان',
+    goalAmountLabel: 'کل ہدف کی رقم (PKR)',
+    orgNameLabel: 'ادارے کا نام',
+    descriptionLabel: 'مہم کی تفصیل',
+    publishCampaignBtn: 'مہم شائع کریں',
+    campaignCreatedSuccess: 'ہنگامی مہم کامیابی کے ساتھ شائع کر دی گئی!',
+
+    // Live Assets Rates (USP)
+    liveRatesTitle: 'مارکیٹ کی لائیو قیمتیں',
+    liveRatesSub: 'سونا، چاندی، کرنسی ریٹس اور نصاب کے لائیو معیارات۔',
+    goldRateLabel: 'سونا (24K فی تولہ)',
+    silverRateLabel: 'چاندی (24K فی تولہ)',
+    usdRateLabel: 'ڈالر کی قیمت (PKR)',
+    applyRatesBtn: 'لائیو ریٹس کیلکولیٹر میں منتقل کریں',
+    ratesAppliedSuccess: 'لائیو ریٹس اور نصاب کیلکولیٹر میں شامل کر دیے گئے!',
+    nisabGoldLabel: 'سونے کا نصاب (7.5 تولے)',
+    nisabSilverLabel: 'چاندی کا نصاب (52.5 تولے)',
+
+    // PDF / CSV Report Export
+    exportReportBtn: 'رپورٹ برآمد کریں',
+    pdfReportTitle: 'سالانہ زکوٰۃ کی خلاصہ رپورٹ',
+    downloadPdfBtn: 'پی ڈی ایف رپورٹ ڈاؤن لوڈ کریں',
+    exportCsvBtn: 'سی ایس وی شیٹ برآمد کریں',
+    reportGeneratedSuccess: 'رپورٹ کامیابی کے ساتھ تیار کر لی گئی!',
+
+    // History Snapshot & Detail Fix
+    assetSnapshotTitle: 'اثاثوں کا تاریخی خلاصہ',
+    totalAssetsLabel: 'کل قابل زکوٰۃ اثاثے',
+    netWealthLabel: 'خالص قابل زکوٰۃ دولت',
   },
 };
 

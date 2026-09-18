@@ -6,6 +6,7 @@ import { SummaryCard } from '../components/SummaryCard';
 import { QuickActionGrid } from '../components/QuickActionCard';
 import { StatusBanner } from '../components/StatusBanner';
 import { AssetItem } from '../components/AssetItem';
+import { LiveRatesWidget } from '../components/LiveRatesWidget';
 
 export const DashboardScreen = ({ onOpenSettings, onNavigateTab }) => {
   const { t, isRTL, themeColors } = useLanguage();
@@ -37,6 +38,9 @@ export const DashboardScreen = ({ onOpenSettings, onNavigateTab }) => {
 
         {/* Quick Action Grid */}
         <QuickActionGrid onSelectAction={(actionId) => onNavigateTab(actionId)} />
+
+        {/* Live Asset Rates Widget */}
+        <LiveRatesWidget onPress={() => onNavigateTab('liveRates')} />
 
         {/* Nisab Status Banner */}
         <StatusBanner />

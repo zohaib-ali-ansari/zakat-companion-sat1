@@ -11,6 +11,10 @@ export const ProfileSettingsScreen = ({
   onOpenTerms,
   onOpenGuidance,
   onOpenExplanation,
+  onOpenDisasterRelief,
+  onOpenOrgPortal,
+  onOpenLiveRates,
+  onExportReport,
 }) => {
   const { t, language, setLanguage, isDarkMode, toggleDarkMode, themeColors, isRTL } = useLanguage();
   const [pushNotifications, setPushNotifications] = React.useState(true);
@@ -61,7 +65,12 @@ export const ProfileSettingsScreen = ({
             </View>
           </TouchableOpacity>
 
-          <Text style={[styles.profileTitle, { color: themeColors.textPrimary }]}>
+          <Text
+            style={[styles.profileTitle, { color: themeColors.textPrimary }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
             {t('userName')}
           </Text>
           <Text style={[styles.userEmail, { color: themeColors.textSecondary }]}>
@@ -127,6 +136,34 @@ export const ProfileSettingsScreen = ({
           <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {t('sectionSupportLegal')}
           </Text>
+
+          <SettingRow
+            icon="heart-outline"
+            title={t('disasterReliefTitle')}
+            type="link"
+            onPress={onOpenDisasterRelief}
+          />
+
+          <SettingRow
+            icon="business-outline"
+            title={t('orgPortalTitle')}
+            type="link"
+            onPress={onOpenOrgPortal}
+          />
+
+          <SettingRow
+            icon="trending-up-outline"
+            title={t('liveRatesTitle')}
+            type="link"
+            onPress={onOpenLiveRates}
+          />
+
+          <SettingRow
+            icon="document-text-outline"
+            title={t('exportReportBtn')}
+            type="link"
+            onPress={onExportReport}
+          />
 
           <SettingRow
             icon="help-circle-outline"
@@ -241,9 +278,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   profileTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: 0,
+    maxWidth: '90%',
   },
   userEmail: {
     fontSize: 14,

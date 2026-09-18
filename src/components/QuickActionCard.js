@@ -8,7 +8,8 @@ export const QuickActionGrid = ({ onSelectAction }) => {
 
   const actions = [
     { id: 'track', labelKey: 'trackAction', icon: 'stats-chart-outline' },
-    { id: 'guidance', labelKey: 'guidanceAction', icon: 'book-outline' },
+    { id: 'relief', labelKey: 'disasterReliefTitle', icon: 'heart-outline' },
+    { id: 'liveRates', labelKey: 'liveRatesTitle', icon: 'trending-up-outline' },
     { id: 'history', labelKey: 'historyAction', icon: 'time-outline' },
   ];
 
@@ -22,9 +23,11 @@ export const QuickActionGrid = ({ onSelectAction }) => {
           activeOpacity={0.8}
         >
           <View style={[styles.iconCircle, { backgroundColor: themeColors.primaryLight }]}>
-            <Ionicons name={action.icon} size={24} color={themeColors.primary} />
+            <Ionicons name={action.icon} size={22} color={themeColors.primary} />
           </View>
-          <Text style={[styles.cardLabel, { color: themeColors.textPrimary }]}>{t(action.labelKey)}</Text>
+          <Text style={[styles.cardLabel, { color: themeColors.textPrimary }]} numberOfLines={1}>
+            {t(action.labelKey)}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>

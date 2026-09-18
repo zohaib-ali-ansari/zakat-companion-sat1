@@ -25,6 +25,11 @@ import { TermsOfServiceScreen } from './src/screens/TermsOfServiceScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
 import { ZakatGuidanceScreen } from './src/screens/ZakatGuidanceScreen';
 
+import DisasterReliefScreen from './src/screens/DisasterReliefScreen';
+import OrganizationPortalScreen from './src/screens/OrganizationPortalScreen';
+import LiveRatesScreen from './src/screens/LiveRatesScreen';
+import { ReportExportModal } from './src/components/ReportExportModal';
+
 function MainAppContent() {
   const { themeColors } = useLanguage();
 
@@ -32,6 +37,10 @@ function MainAppContent() {
   const [activeTab, setActiveTab] = useState('home');
   const [historyView, setHistoryView] = useState('list');
   const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedCycle, setSelectedCycle] = useState(null);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [activeCalculationData, setActiveCalculationData] = useState(null);
 
   if (authFlow === 'splash') {
     return <SplashScreen onGetStarted={() => setAuthFlow('language')} />;
@@ -73,6 +82,10 @@ function MainAppContent() {
         onOpenTerms={() => setActiveTab('terms')}
         onOpenGuidance={() => setActiveTab('guidance')}
         onOpenExplanation={() => setActiveTab('explanation')}
+        onOpenDisasterRelief={() => setActiveTab('relief')}
+        onOpenOrgPortal={() => setActiveTab('orgPortal')}
+        onOpenLiveRates={() => setActiveTab('liveRates')}
+        onExportReport={() => setReportModalVisible(true)}
       />
     );
   }
@@ -90,21 +103,67 @@ function MainAppContent() {
   }
 
   if (activeTab === 'explanation') {
-    return <CalculatedZakatExplanationScreen onBack={() => setActiveTab('settings')} />;
+    return (
+      <CalculatedZakatExplanationScreen
+        calculatedData={activeCalculationData}
+        onBack={() => setActiveTab('calculator')}
+        onStartTracking={() => setActiveTab('track')}
+      />
+    );
+  }
+
+  if (activeTab === 'relief') {
+    return (
+      <DisasterReliefScreen
+        onBack={() => setActiveTab('home')}
+        onNavigateAddPayment={(initialData) => {
+          setEditingPayment(initialData);
+          setActiveTab('addPayment');
+        }}
+        onNavigateOrgPortal={() => setActiveTab('orgPortal')}
+      />
+    );
+  }
+
+  if (activeTab === 'orgPortal') {
+    return <OrganizationPortalScreen onBack={() => setActiveTab('relief')} />;
+  }
+
+  if (activeTab === 'liveRates') {
+    return (
+      <LiveRatesScreen
+        onBack={() => setActiveTab('home')}
+        onNavigateCalculator={() => setActiveTab('calculator')}
+      />
+    );
   }
 
   const renderScreen = () => {
     if (activeTab === 'addPayment') {
-      return <AddPaymentScreen onBack={() => setActiveTab('track')} />;
+      return (
+        <AddPaymentScreen
+          onBack={() => {
+            setActiveTab('track');
+            setEditingPayment(null);
+          }}
+          editingPayment={editingPayment}
+        />
+      );
     }
 
     if (activeTab === 'history' && historyView === 'detail') {
       return (
         <HistoryYearDetailScreen
           year={selectedYear}
+          cycle={selectedCycle}
           onBack={() => {
             setHistoryView('list');
             setSelectedYear(null);
+            setSelectedCycle(null);
+          }}
+          onNavigateEditPayment={(rec) => {
+            setEditingPayment(rec);
+            setActiveTab('addPayment');
           }}
         />
       );
@@ -121,20 +180,36 @@ function MainAppContent() {
 
     switch (activeTab) {
       case 'calculator':
-        return <CalculatorScreen onOpenSettings={() => setActiveTab('settings')} />;
+        return (
+          <CalculatorScreen
+            onOpenSettings={() => setActiveTab('settings')}
+            onNavigateExplanation={(calcData) => {
+              setActiveCalculationData(calcData);
+              setActiveTab('explanation');
+            }}
+          />
+        );
       case 'track':
         return (
           <TrackingScreen
             onOpenSettings={() => setActiveTab('settings')}
-            onAddPayment={() => setActiveTab('addPayment')}
+            onAddPayment={(paymentToEdit) => {
+              setEditingPayment(paymentToEdit || null);
+              setActiveTab('addPayment');
+            }}
+            onNavigateHistory={() => {
+              setActiveTab('history');
+              setHistoryView('list');
+            }}
           />
         );
       case 'history':
         return (
           <HistoryScreen
             onOpenSettings={() => setActiveTab('settings')}
-            onOpenYearDetail={(year) => {
+            onOpenYearDetail={(year, cycle) => {
               setSelectedYear(year);
+              setSelectedCycle(cycle);
               setHistoryView('detail');
             }}
             onOpenAllRecords={() => setHistoryView('records')}
@@ -162,6 +237,11 @@ function MainAppContent() {
     <View style={[styles.mainContainer, { backgroundColor: themeColors.background }]}>
       <View style={styles.screenContainer}>{renderScreen()}</View>
       <BottomNavigation activeTab={activeTab} onSelectTab={(tabId) => setActiveTab(tabId)} />
+      <ReportExportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        year="2024"
+      />
     </View>
   );
 }

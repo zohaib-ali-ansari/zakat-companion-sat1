@@ -13,93 +13,62 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
 
+const ASNAF_CATEGORIES = [
+  { id: '1', name: 'Al-Fuqara (The Poor)', arabic: 'الفقراء', desc: 'Those without any income or means to meet basic survival needs.' },
+  { id: '2', name: 'Al-Masakin (The Needy)', arabic: 'المساكين', desc: 'Those whose income falls below the essential cost of living.' },
+  { id: '3', name: 'Al-Amilina Alayha (Zakat Admin)', arabic: 'العاملين عليها', desc: 'Appointed collectors and administrators of Zakat distribution.' },
+  { id: '4', name: 'Al-Mu\'allafatu Qulubuhum (Reconciling Hearts)', arabic: 'المؤلفة قلوبهم', desc: 'New Muslims or those whose hearts are being inclined towards Islam.' },
+  { id: '5', name: 'Fir-Riqab (Freeing Slaves/Captives)', arabic: 'في الرقاب', desc: 'Assisting individuals to gain freedom from bondage or captivity.' },
+  { id: '6', name: 'Al-Gharimin (Debtors)', arabic: 'الغارمين', desc: 'Those burdened with overwhelming debts incurred for permissible needs.' },
+  { id: '7', name: 'Fi Sabilillah (In the Cause of Allah)', arabic: 'في سبيل الله', desc: 'Striving in the cause of Allah, community welfare, and Islamic education.' },
+  { id: '8', name: 'Ibn us-Sabil (Stranded Travelers)', arabic: 'ابن السبيل', desc: 'Travelers stranded away from home without financial resources.' },
+];
+
 const GUIDANCE_TOPICS_EN = [
   {
     id: 'what-is-zakat',
     title: 'What is Zakat?',
-    section: 'fundamentals',
     summary: 'The basic meaning and purpose of Zakat as one of the pillars of Islam.',
     body: [
-      'Zakat is one of the five pillars of Islam. It is an obligatory act of worship that requires eligible Muslims to give a portion of their wealth to those in need.',
-      'The word Zakat means "purification" and "growth" - giving Zakat purifies the remaining wealth and brings blessing (barakah) to it.',
-      'The standard rate for most zakatable assets is 2.5% of the wealth held above the Nisab threshold for one full lunar year.',
+      'Zakat is one of the five pillars of Islam. It is an obligatory act of worship requiring eligible Muslims to give 2.5% of their qualifying wealth to designated recipients.',
+      'Zakat purifies wealth, removes greed, and fosters social security in the Muslim ummah.',
     ],
   },
   {
     id: 'understanding-nisab',
     title: 'Understanding Nisab',
-    section: 'fundamentals',
-    summary: 'The minimum amount of wealth a Muslim must have before Zakat becomes due.',
+    summary: 'The minimum wealth threshold before Zakat becomes due.',
     body: [
-      'Nisab is the minimum threshold of wealth a Muslim must own before Zakat becomes obligatory.',
-      'It is commonly calculated using the value of 87.48 grams (7.5 Tolas) of gold or 612.36 grams (52.5 Tolas) of silver.',
-      'If your total zakatable wealth stays above the Nisab threshold for a full lunar year (Hawl), Zakat becomes due on it.',
+      'Nisab is the minimum monetary threshold of wealth a Muslim must own before Zakat becomes due.',
+      'Calculated as 52.5 Tolas (612.36g) of Silver or 7.5 Tolas (87.48g) of Gold.',
+      'If net wealth remains above Nisab for a full lunar year (Hawl), 2.5% Zakat is due.',
     ],
   },
   {
-    id: 'gold-silver',
-    title: 'Gold & Silver',
-    section: 'assets',
-    summary: 'How Zakat applies to gold and silver holdings.',
+    id: 'crypto-zakat',
+    title: 'Cryptocurrency Zakat Rules',
+    summary: 'How Zakat applies to Bitcoin, Ethereum, and digital assets.',
     body: [
-      'Gold and silver are zakatable assets regardless of whether they are held as jewelry, coins, or bullion.',
-      'The value is typically calculated using the current market rate at the time of your Zakat calculation.',
-      'The standard Zakat rate of 2.5% applies to the total value owned.',
+      'Crypto held for trading or investment is zakatable at 2.5% of its current market exchange value in local currency (PKR) at your Zakat anniversary.',
+      'NFTs and digital assets bought for reselling are treated as commercial trade merchandise.',
     ],
   },
   {
-    id: 'cash-bank',
-    title: 'Cash & Bank Accounts',
-    section: 'assets',
-    summary: 'How Zakat applies to cash on hand and bank balances.',
+    id: 'pension-zakat',
+    title: 'Pension & Provident Fund Zakat',
+    summary: 'Zakat rules on retirement accounts and EPF.',
     body: [
-      'All cash on hand, and balances in savings or current bank accounts, are zakatable at 2.5% of the total amount.',
-      'This includes money held in different currencies converted to your local currency at calculation time.',
-    ],
-  },
-];
-
-const GUIDANCE_TOPICS_UR = [
-  {
-    id: 'what-is-zakat',
-    title: 'زکوٰۃ کیا ہے؟',
-    section: 'fundamentals',
-    summary: 'اسلام کے اہم ارکان میں سے ایک کے طور پر زکوٰۃ کا بنیادی مقصد اور اہمیت۔',
-    body: [
-      'زکوٰۃ اسلام کے پانچ بنیادی ارکان میں سے ایک ہے۔ یہ ایک فرض عبادی عمل ہے جس کے تحت صاحبانِ نصاب مسلمانوں کو اپنی دولت کا ایک مقررہ حصہ مستحقین کو دینا ہوتا ہے۔',
-      'لفظ "زکوٰۃ" کا مطلب پاکیزگی اور بالیدگی ہے۔ زکوٰۃ ادا کرنے سے باقی ماندہ مال پاک ہوتا ہے اور اس میں برکت آتی ہے۔',
-      'عام اثاثوں پر زکوٰۃ کی شرح نصاب سے زائد رقم پر سال میں ایک بار 2.5 فیصد (1/40 واں حصہ) ہوتی ہے۔',
+      'Zakat is payable on pension funds that you voluntarily contribute to and have unconditional access/withdrawal rights over.',
+      'Compulsory non-withdrawable employer pension funds are zakatable upon actual receipt.',
     ],
   },
   {
-    id: 'understanding-nisab',
-    title: 'نصاب کو سمجھنا',
-    section: 'fundamentals',
-    summary: 'وہ کم از کم مالیت جس کا مالک ہونے پر انسان پر زکوٰۃ فرض ہوتی ہے۔',
+    id: 'stocks-zakat',
+    title: 'Stocks & Mutual Funds',
+    summary: 'Calculating Zakat on share portfolios.',
     body: [
-      'نصاب وہ شرعی معیار ہے جو یہ طے کرتا ہے کہ آیا کسی شخص پر زکوٰۃ واجب ہے یا نہیں۔',
-      'اس کا حساب 87.48 گرام (7.5 تولے) سونا یا 612.36 گرام (52.5 تولے) چاندی کی موجودہ مارکیٹ ویلیو کے مطابق لگایا جاتا ہے۔',
-      'اگر آپ کی کل قابلِ زکوٰۃ دولت ایک پورا قمری سال (حول) نصاب کی مقدار سے زیادہ رہے تو اس پر 2.5% زکوٰۃ ادا کرنا فرض ہو جاتا ہے۔',
-    ],
-  },
-  {
-    id: 'gold-silver',
-    title: 'سونا اور چاندی',
-    section: 'assets',
-    summary: 'سونے اور چاندی کی ملکیت پر زکوٰۃ کا اطلاق کیسے ہوتا ہے۔',
-    body: [
-      'سونا اور چاندی چاہے زیورات کی شکل میں ہوں، سکے ہوں یا بسکوٹ، اکثریت علماء کے نزدیک قابلِ زکوٰۃ اثاثے ہیں۔',
-      'زکوٰۃ کی ادائیگی کے وقت سونے اور چاندی کی موجودہ مارکیٹ ریٹ کے حساب سے کل مالیت کا 2.5% زکوٰۃ دی جاتی ہے۔',
-    ],
-  },
-  {
-    id: 'cash-bank',
-    title: 'نقد رقم اور بینک بیلنس',
-    section: 'assets',
-    summary: 'ہاتھ میں موجود نقد رقم اور بینک اکاؤنٹس پر زکوٰۃ کا حساب۔',
-    body: [
-      'ہاتھ میں موجود تمام نقد رقم اور سیونگز یا کرنٹ بینک اکاؤنٹس کے بیلنس پر 2.5 فیصد کی شرح سے زکوٰۃ فرض ہے۔',
-      'غیر ملکی کرنسیوں کو بھی حساب کے وقت مقامی کرنسی میں تبدیل کر کے کل مالیت میں شامل کیا جاتا ہے۔',
+      'If held for short-term trading: Zakat is paid on 100% of current portfolio market value at 2.5%.',
+      'If held for long-term dividends: Zakat is paid on net liquid assets of the underlying company (~25-30% estimate) or dividend income.',
     ],
   },
 ];
@@ -111,49 +80,22 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
   const [query, setQuery] = useState('');
   const [selectedTopic, setSelectedTopic] = useState(null);
 
-  const guidanceTopics = isUr ? GUIDANCE_TOPICS_UR : GUIDANCE_TOPICS_EN;
+  const guidanceTopics = GUIDANCE_TOPICS_EN;
 
   const filteredTopics = useMemo(() => {
-    if (!query.trim()) return [];
+    if (!query.trim()) return guidanceTopics;
     const q = query.trim().toLowerCase();
     return guidanceTopics.filter(
       (item) => item.title.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q)
     );
   }, [query, guidanceTopics]);
 
-  const isSearching = query.trim().length > 0;
-
-  const guidanceItems = [
-    {
-      q: isUr ? 'زکوٰۃ کس پر فرض ہے؟' : 'Who is obligated to pay Zakat?',
-      a: isUr
-        ? 'ہر اس عاقل اور بالغ مسلمان پر زکوٰۃ فرض ہے جس کے پاس نصاب کی مقدار کے برابر یا اس سے زائد اثاثے ایک سال سے موجود ہوں۔'
-        : 'Zakat is mandatory on any sane, adult Muslim who owns wealth meeting or exceeding the Nisab threshold for one full lunar year (Hawl).',
-    },
-    {
-      q: isUr ? 'نصاب کا کیا مطلب ہے؟' : 'What is Nisab?',
-      a: isUr
-        ? 'نصاب وہ کم از کم شرعی حد ہے جس پر زکوٰۃ لاگو ہوتی ہے۔ سونا: 7.5 تولے (87.48 گرام) اور چاندی: 52.5 تولے (612.36 گرام)۔'
-        : 'Nisab is the minimum threshold of wealth that makes Zakat obligatory. It equals 52.5 Tolas (612.36g) of Silver or 7.5 Tolas (87.48g) of Gold.',
-    },
-    {
-      q: isUr ? 'کن اثاثوں پر زکوٰۃ ادا کرنی ہوگی؟' : 'Which assets are subject to Zakat?',
-      a: isUr
-        ? 'سونا، چاندی، نقد رقم، بینک ڈیپازٹس، شیئرز، میوچل فنڈز، اور تجارتی مال پر زکوٰۃ عائد ہوتی ہے۔'
-        : 'Subject assets include Gold, Silver, Cash in Hand & Bank, Investments, Stocks, Rental Revenue, and Commercial Trade Merchandise.',
-    },
-  ];
-
   if (selectedTopic) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
         <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
         <View style={[styles.headerRow, isRTL && styles.rtlRow]}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => setSelectedTopic(null)}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.backBtn} onPress={() => setSelectedTopic(null)} activeOpacity={0.7}>
             <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={themeColors.primary} />
             <Text style={[styles.backText, { color: themeColors.primary }]}>{t('backBtn')}</Text>
           </TouchableOpacity>
@@ -173,23 +115,6 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
     );
   }
 
-  const renderRow = (item) => (
-    <TouchableOpacity
-      key={item.id}
-      style={[styles.row, { borderBottomColor: themeColors.border }, isRTL && styles.rtlRow]}
-      onPress={() => setSelectedTopic(item)}
-      activeOpacity={0.6}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.rowTitle, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{item.title}</Text>
-        <Text style={[styles.rowSummary, { color: themeColors.textMuted }, isRTL && styles.rtlText]} numberOfLines={1}>
-          {item.summary}
-        </Text>
-      </View>
-      <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={themeColors.textMuted} />
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
@@ -208,44 +133,55 @@ export const ZakatGuidanceScreen = ({ onBack }) => {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder={isUr ? 'عنوان یا سوال تلاش کریں...' : 'Search topics, rulings...'}
+          placeholder="Search topics, rulings, Crypto, Stocks..."
           placeholderTextColor={themeColors.textMuted}
           style={[styles.searchInput, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}
         />
       </View>
 
-      {isSearching ? (
-        <FlatList
-          data={filteredTopics}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => renderRow(item)}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
-              {isUr ? 'تلاش کا کوئی نتیجہ نہیں ملا۔' : 'No topics match your search.'}
-            </Text>
-          }
-        />
-      ) : (
-        <ScrollView contentContainerStyle={styles.listContent}>
-          {guidanceTopics.map((item) => renderRow(item))}
+      <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+        {/* 8 Asnaf Categories Section */}
+        <View style={[styles.asnafCard, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
+          <View style={styles.asnafHeader}>
+            <Ionicons name="heart" size={20} color={themeColors.primary} />
+            <Text style={[styles.asnafTitle, { color: themeColors.primary }]}>The 8 Eligible Asnaf (Recipients)</Text>
+          </View>
+          <Text style={[styles.asnafSub, { color: themeColors.textSecondary }]}>
+            Surah At-Tawbah (9:60) specifies exactly 8 categories eligible to receive Zakat:
+          </Text>
 
-          <View style={[styles.faqSection, { borderColor: themeColors.border }]}>
-            {guidanceItems.map((item, idx) => (
-              <View
-                key={idx}
-                style={[styles.faqCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
-              >
-                <View style={[styles.qRow, isRTL && styles.rtlRow]}>
-                  <Ionicons name="help-circle" size={22} color={themeColors.primary} />
-                  <Text style={[styles.qText, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>{item.q}</Text>
+          <View style={styles.asnafGrid}>
+            {ASNAF_CATEGORIES.map((cat) => (
+              <View key={cat.id} style={[styles.asnafItem, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+                <View style={styles.asnafTopRow}>
+                  <Text style={[styles.asnafName, { color: themeColors.textPrimary }]}>{cat.name}</Text>
+                  <Text style={[styles.asnafArabic, { color: themeColors.primary }]}>{cat.arabic}</Text>
                 </View>
-                <Text style={[styles.aText, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>{item.a}</Text>
+                <Text style={[styles.asnafDesc, { color: themeColors.textSecondary }]}>{cat.desc}</Text>
               </View>
             ))}
           </View>
-        </ScrollView>
-      )}
+        </View>
+
+        {/* Guidance Topics */}
+        <Text style={[styles.sectionHeading, { color: themeColors.textPrimary }]}>Knowledge & Rulings</Text>
+        {filteredTopics.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={[styles.row, { borderBottomColor: themeColors.border }, isRTL && styles.rtlRow]}
+            onPress={() => setSelectedTopic(item)}
+            activeOpacity={0.6}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowTitle, { color: themeColors.textPrimary }]}>{item.title}</Text>
+              <Text style={[styles.rowSummary, { color: themeColors.textMuted }]} numberOfLines={1}>
+                {item.summary}
+              </Text>
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={themeColors.textMuted} />
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -272,10 +208,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginHorizontal: 20,
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   searchInput: { flex: 1, fontSize: 15 },
-  listContent: { paddingHorizontal: 20, paddingBottom: 32 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  asnafCard: { padding: 18, borderRadius: 20, borderWidth: 1.5, marginBottom: 20 },
+  asnafHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  asnafTitle: { fontSize: 17, fontWeight: '800' },
+  asnafSub: { fontSize: 12, lineHeight: 18, marginBottom: 14 },
+  asnafGrid: { gap: 10 },
+  asnafItem: { padding: 12, borderRadius: 12, borderWidth: 1 },
+  asnafTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  asnafName: { fontSize: 13, fontWeight: '800' },
+  asnafArabic: { fontSize: 14, fontWeight: '700' },
+  asnafDesc: { fontSize: 12, lineHeight: 16 },
+  sectionHeading: { fontSize: 18, fontWeight: '800', marginBottom: 10, marginTop: 6 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -284,15 +231,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 12,
   },
-  rowTitle: { fontSize: 15, fontWeight: '600' },
+  rowTitle: { fontSize: 15, fontWeight: '700' },
   rowSummary: { fontSize: 13, marginTop: 2 },
-  emptyText: { marginTop: 24, textAlign: 'center' },
   detailContent: { padding: 20, gap: 14 },
   paragraph: { fontSize: 15, lineHeight: 24 },
-  faqSection: { marginTop: 24, gap: 12, borderTopWidth: 1, paddingTop: 16 },
-  faqCard: { padding: 18, borderRadius: 18, borderWidth: 1 },
-  qRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  qText: { fontSize: 16, fontWeight: '800', flex: 1 },
-  aText: { fontSize: 14, lineHeight: 22 },
   rtlText: { textAlign: 'right' },
 });

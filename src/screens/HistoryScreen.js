@@ -5,27 +5,9 @@ import HistoryYearCard from '../components/HistoryYearCard';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 
-const getYear = (dateStr) => {
-  if (!dateStr) return 'Other';
-  const match = dateStr.match(/\d{4}/);
-  return match ? match[0] : 'Other';
-};
-
 export default function HistoryScreen({ onOpenSettings, onOpenYearDetail, onOpenAllRecords }) {
   const { t, isRTL, themeColors } = useLanguage();
-  const { records } = useZakat();
-
-  const yearlySummaries = Object.entries(
-    (records || []).reduce((groups, record) => {
-      const year = getYear(record.date);
-      groups[year] = groups[year] || { year, transactionCount: 0, totalAmount: 0 };
-      groups[year].transactionCount += 1;
-      groups[year].totalAmount += (Number(record.amount) || 0);
-      return groups;
-    }, {})
-  )
-    .map(([, summary]) => summary)
-    .sort((first, second) => Number(second.year) - Number(first.year));
+  const { completedCycles } = useZakat();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
@@ -35,21 +17,28 @@ export default function HistoryScreen({ onOpenSettings, onOpenYearDetail, onOpen
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
           <Text style={[styles.title, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('pastYearsHistory')}
+            Zakat History
+          </Text>
+          <Text style={[styles.subtitle, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
+            Completed Zakat Cycles & Records
           </Text>
 
-          {yearlySummaries.length > 0 ? (
-            yearlySummaries.map((summary) => (
+          {completedCycles && completedCycles.length > 0 ? (
+            completedCycles.map((cycle) => (
               <HistoryYearCard
-                key={summary.year}
-                {...summary}
-                onPress={() => onOpenYearDetail?.(summary.year)}
+                key={cycle.id}
+                year={cycle.zakatPeriod || `Zakat Period ${cycle.year}`}
+                transactionCount={cycle.payments ? cycle.payments.length : 0}
+                totalAmount={cycle.totalPaid || cycle.trackingTotal}
+                onPress={() => onOpenYearDetail?.(cycle.year, cycle)}
               />
             ))
           ) : (
-            <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
-              {t('noPaymentsYet')}
-            </Text>
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
+                No completed Zakat periods archived yet.
+              </Text>
+            </View>
           )}
 
           <Pressable style={styles.recordsLink} onPress={() => onOpenAllRecords?.()}>
@@ -68,22 +57,21 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   listContent: { paddingBottom: 30 },
   title: {
-    fontSize: 36,
-    lineHeight: 44,
+    fontSize: 32,
+    lineHeight: 40,
     fontWeight: '800',
     paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 28,
+    paddingTop: 20,
   },
-  rtlText: {
-    textAlign: 'right',
+  subtitle: {
+    fontSize: 14,
+    paddingHorizontal: 24,
+    marginTop: 4,
+    marginBottom: 20,
   },
+  rtlText: { textAlign: 'right' },
   recordsLink: { alignItems: 'center', paddingVertical: 18 },
   recordsLinkText: { fontSize: 15, fontWeight: '800', letterSpacing: 1 },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    paddingHorizontal: 24,
-    marginVertical: 20,
-  },
+  emptyContainer: { paddingHorizontal: 24, marginVertical: 30, alignItems: 'center' },
+  emptyText: { fontSize: 14, textAlign: 'center' },
 });
