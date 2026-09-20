@@ -202,7 +202,7 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
             {records && records.length > 0 ? (
               records.map((item) => (
                 <View
-                  key={item.id}
+                  key={item.id || item._id}
                   style={[styles.paymentCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
                 >
                   <View style={[styles.paymentIconBox, { backgroundColor: themeColors.primaryLight }]}>
@@ -232,7 +232,7 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.actionBtn, { backgroundColor: '#FEE2E2' }]}
-                        onPress={() => handleDelete(item.id)}
+                        onPress={() => handleDelete(item.id || item._id)}
                         activeOpacity={0.7}
                       >
                         <Ionicons name="trash-outline" size={14} color={themeColors.danger} />

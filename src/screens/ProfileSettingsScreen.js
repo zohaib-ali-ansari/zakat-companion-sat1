@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
+import { useZakat } from '../context/ZakatContext';
 import { SettingRow } from '../components/SettingRow';
 
 export const ProfileSettingsScreen = ({
@@ -17,9 +18,11 @@ export const ProfileSettingsScreen = ({
   onExportReport,
 }) => {
   const { t, language, setLanguage, isDarkMode, toggleDarkMode, themeColors, isRTL } = useLanguage();
+  const { currentUser } = useZakat();
+
   const [pushNotifications, setPushNotifications] = React.useState(true);
   const [zakatReminders, setZakatReminders] = React.useState(true);
-  const [avatarIndex, setAvatarIndex] = React.useState(0);
+  const [avatarIndex, setAvatarIndex] = React.useState(currentUser?.avatar ?? 0);
 
   const avatars = ['wallet', 'person', 'star', 'sparkles'];
 
@@ -41,7 +44,7 @@ export const ProfileSettingsScreen = ({
           <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color={themeColors.primary} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.langPill, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}
           onPress={() => setLanguage(language === 'en' ? 'ur' : 'en')}
           activeOpacity={0.8}
@@ -53,7 +56,6 @@ export const ProfileSettingsScreen = ({
       </View>
 
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
-        
         {/* Profile Card / Header with editable avatar */}
         <View style={styles.profileHeader}>
           <TouchableOpacity style={styles.avatarWrapper} onPress={cycleAvatar} activeOpacity={0.85}>
@@ -71,10 +73,10 @@ export const ProfileSettingsScreen = ({
             adjustsFontSizeToFit
             minimumFontScale={0.7}
           >
-            {t('userName')}
+            {currentUser?.name || t('userName')}
           </Text>
           <Text style={[styles.userEmail, { color: themeColors.textSecondary }]}>
-            {t('userEmail')}
+            {currentUser?.email || t('userEmail')}
           </Text>
           <Text style={[styles.avatarHint, { color: themeColors.primary }]}>
             {t('changeAvatar')}

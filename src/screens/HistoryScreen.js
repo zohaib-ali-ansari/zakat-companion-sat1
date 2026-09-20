@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, StatusBar } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, StatusBar } from 'react-native';
 import { Header } from '../components/Header';
 import HistoryYearCard from '../components/HistoryYearCard';
 import { useLanguage } from '../context/LanguageContext';

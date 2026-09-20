@@ -3,19 +3,36 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 
+const DEFAULT_LABELS = {
+  home: 'Home',
+  calculator: 'Calculator',
+  track: 'Track',
+  history: 'History',
+  assistant: 'Assistant',
+};
+
 export const BottomNavigation = ({ activeTab, onSelectTab }) => {
-  const { t, themeColors } = useLanguage();
+  const { t, themeColors, language } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const tabs = [
-    { id: 'home', labelKey: 'navHome', iconOutline: 'home-outline', iconFilled: 'home' },
-    { id: 'calculator', labelKey: 'navCalculator', iconOutline: 'calculator-outline', iconFilled: 'calculator' },
-    { id: 'track', labelKey: 'navTrack', iconOutline: 'stats-chart-outline', iconFilled: 'stats-chart' },
-    { id: 'history', labelKey: 'navHistory', iconOutline: 'time-outline', iconFilled: 'time' },
-    { id: 'assistant', labelKey: 'navAssistant', iconOutline: 'hardware-chip-outline', iconFilled: 'hardware-chip' },
+    { id: 'home', labelKey: 'navHome', fallback: 'Home', urFallback: '\u06C1\u0648\u0645', iconOutline: 'home-outline', iconFilled: 'home' },
+    { id: 'calculator', labelKey: 'navCalculator', fallback: 'Calculator', urFallback: '\u06A9\u06CC\u0644\u06A9\u0648\u0644\u06CC\u0679\u0631', iconOutline: 'calculator-outline', iconFilled: 'calculator' },
+    { id: 'track', labelKey: 'navTrack', fallback: 'Track', urFallback: '\u0679\u0631\u06CC\u06A9', iconOutline: 'stats-chart-outline', iconFilled: 'stats-chart' },
+    { id: 'history', labelKey: 'navHistory', fallback: 'History', urFallback: '\u06C1\u0633\u0679\u0631\u06CC', iconOutline: 'time-outline', iconFilled: 'time' },
+    { id: 'assistant', labelKey: 'navAssistant', fallback: 'Assistant', urFallback: '\u0627\u0633\u0633\u0679\u0646\u0679', iconOutline: 'hardware-chip-outline', iconFilled: 'hardware-chip' },
   ];
 
   const bottomInset = Math.max(insets.bottom, 10);
+
+  const getLabel = (tab) => {
+    const translated = t(tab.labelKey);
+    // If translated string is missing or returns the raw key starting with 'nav', use fallback
+    if (!translated || translated.startsWith('nav')) {
+      return language === 'ur' ? tab.urFallback : tab.fallback;
+    }
+    return translated;
+  };
 
   return (
     <View
@@ -53,7 +70,7 @@ export const BottomNavigation = ({ activeTab, onSelectTab }) => {
               ]}
               numberOfLines={1}
             >
-              {t(tab.labelKey)}
+              {getLabel(tab)}
             </Text>
           </TouchableOpacity>
         );

@@ -1,11 +1,16 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
+import { useZakat } from '../context/ZakatContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export const Header = ({ onOpenSettings }) => {
   const { t, isRTL, language, isDarkMode, toggleDarkMode, themeColors } = useLanguage();
+  const { currentUser } = useZakat();
   const insets = useSafeAreaInsets();
+
+  const avatars = ['wallet', 'person', 'star', 'sparkles'];
+  const avatarIcon = avatars[currentUser?.avatar ?? 1] || 'person';
 
   return (
     <View
@@ -26,7 +31,7 @@ export const Header = ({ onOpenSettings }) => {
         accessibilityRole="button"
         accessibilityLabel="Profile settings"
       >
-        <Ionicons name="person" size={20} color={themeColors.primary} />
+        <Ionicons name={avatarIcon} size={20} color={themeColors.primary} />
       </TouchableOpacity>
 
       {/* App Title */}
@@ -83,4 +88,3 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-

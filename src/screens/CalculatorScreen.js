@@ -17,7 +17,15 @@ import { Header } from '../components/Header';
 
 export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
   const { t, themeColors, isRTL } = useLanguage();
-  const { liveRates, setCalculatedResult, updateTotalDue, startTrackingCalculatedAmount } = useZakat();
+  const {
+    liveRates,
+    metalRates,
+    setCalculatedResult,
+    updateTotalDue,
+    startTrackingCalculatedAmount,
+    updateAssetsBreakdown,
+    saveCalculationSnapshot,
+  } = useZakat();
 
   // Active Category Toggles
   const [selectedCategories, setSelectedCategories] = useState({
@@ -71,8 +79,8 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
     const totalAssets = gold + silver + cash + stocks + mutualFunds + crypto + business + pension + property;
     const netZakatableWealth = Math.max(0, totalAssets - liabilities);
 
-    // Use live silver nisab from context
-    const nisabThreshold = liveRates.silverNisabPkr || 154875;
+    // Use live silver nisab from backend or context
+    const nisabThreshold = metalRates?.nisab?.silverThreshold || liveRates?.silverNisabPkr || 154875;
     const isNisabMet = netZakatableWealth >= nisabThreshold;
     const zakatPayable = isNisabMet ? netZakatableWealth * 0.025 : 0;
 
@@ -97,26 +105,46 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
 
     setCalculated(result);
     setIsSaved(false);
-    // Store in context so Explanation screen can read it
-    setCalculatedResult(result);
+    if (setCalculatedResult) setCalculatedResult(result);
+
+    if (updateAssetsBreakdown) {
+      updateAssetsBreakdown({
+        goldVal,
+        silverVal,
+        cashHand,
+        bankSavings,
+        stockVal,
+        propertyVal,
+        businessVal,
+        liabilitiesVal,
+      });
+    }
   };
 
-  const handleStartTracking = () => {
-    if (!calculated || calculated.zakatPayable <= 0) {
-      Alert.alert('Zakat Companion', 'Please calculate your Zakat first.');
-      return;
-    }
-    startTrackingCalculatedAmount(calculated.zakatPayable);
-    setIsSaved(true);
-    // Navigate to explanation first (which then goes to track)
-    if (onNavigateExplanation) {
-      onNavigateExplanation(calculated);
-    }
-  };
-
-  const handleSaveAndTrack = () => {
+  const handleSaveAndTrack = async () => {
     if (!calculated || calculated.zakatPayable <= 0) return;
-    startTrackingCalculatedAmount(calculated.zakatPayable);
+    if (startTrackingCalculatedAmount) {
+      startTrackingCalculatedAmount(calculated.zakatPayable);
+    } else if (updateTotalDue) {
+      updateTotalDue(calculated.zakatPayable);
+    }
+
+    if (saveCalculationSnapshot) {
+      await saveCalculationSnapshot({
+        selectedCategories,
+        values: {
+          goldVal: parseFloat(goldVal) || 0,
+          silverVal: parseFloat(silverVal) || 0,
+          cashHand: parseFloat(cashHand) || 0,
+          bankSavings: parseFloat(bankSavings) || 0,
+          stockVal: parseFloat(stockVal) || 0,
+          propertyVal: parseFloat(propertyVal) || 0,
+          businessVal: parseFloat(businessVal) || 0,
+          liabilitiesVal: parseFloat(liabilitiesVal) || 0,
+        },
+        currency: 'PKR',
+      });
+    }
     setIsSaved(true);
   };
 
@@ -154,7 +182,7 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
         <View style={[styles.nisabBar, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
           <Ionicons name="information-circle-outline" size={16} color={themeColors.primary} />
           <Text style={[styles.nisabBarText, { color: themeColors.primary }]}>
-            Nisab (Silver): PKR {(liveRates.silverNisabPkr || 154875).toLocaleString()} · Gold: PKR {(liveRates.gold24kTola || 245000).toLocaleString()} /Tola
+            Nisab (Silver): PKR {(metalRates?.nisab?.silverThreshold || liveRates?.silverNisabPkr || 154875).toLocaleString()} · Gold: PKR {(liveRates?.gold24kTola || 245000).toLocaleString()} /Tola
           </Text>
         </View>
 
@@ -219,7 +247,7 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
           {selectedCategories.stocks && (
             <View style={styles.fieldGroup}>
               <Text style={[styles.groupHeader, { color: themeColors.primary }]}>Stocks & Investments</Text>
-              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Stock Portfolio Value (PKR)</Text>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Market Value of Shares/Stocks (PKR)</Text>
               <TextInput style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]} keyboardType="numeric" value={stockVal} onChangeText={(v) => { setStockVal(v); setCalculated(null); }} placeholder="0" placeholderTextColor={themeColors.textMuted} />
             </View>
           )}
@@ -237,7 +265,6 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
               <Text style={[styles.groupHeader, { color: themeColors.primary }]}>Cryptocurrency</Text>
               <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Total Crypto Value in PKR</Text>
               <TextInput style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]} keyboardType="numeric" value={cryptoVal} onChangeText={(v) => { setCryptoVal(v); setCalculated(null); }} placeholder="0" placeholderTextColor={themeColors.textMuted} />
-              <Text style={[styles.hint, { color: themeColors.textMuted }]}>Convert BTC/ETH etc. to PKR at current exchange rate</Text>
             </View>
           )}
 
@@ -254,7 +281,6 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
               <Text style={[styles.groupHeader, { color: themeColors.primary }]}>Pension / Retirement</Text>
               <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Accessible Pension Fund Value (PKR)</Text>
               <TextInput style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]} keyboardType="numeric" value={pensionVal} onChangeText={(v) => { setPensionVal(v); setCalculated(null); }} placeholder="0" placeholderTextColor={themeColors.textMuted} />
-              <Text style={[styles.hint, { color: themeColors.textMuted }]}>Only include amounts accessible/withdrawable this year</Text>
             </View>
           )}
 
@@ -263,7 +289,6 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
               <Text style={[styles.groupHeader, { color: themeColors.primary }]}>Property (Trade/Rental)</Text>
               <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Market Value of Trade Property (PKR)</Text>
               <TextInput style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]} keyboardType="numeric" value={propertyVal} onChangeText={(v) => { setPropertyVal(v); setCalculated(null); }} placeholder="0" placeholderTextColor={themeColors.textMuted} />
-              <Text style={[styles.hint, { color: themeColors.textMuted }]}>Personal residence is NOT zakatable</Text>
             </View>
           )}
 
@@ -272,7 +297,6 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
               <Text style={[styles.groupHeader, { color: '#EF4444' }]}>Deductible Liabilities</Text>
               <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>{t('fieldLiabilitiesVal')} (PKR)</Text>
               <TextInput style={[styles.input, { backgroundColor: themeColors.cardBg, color: themeColors.textPrimary, borderColor: themeColors.border }]} keyboardType="numeric" value={liabilitiesVal} onChangeText={(v) => { setLiabilitiesVal(v); setCalculated(null); }} placeholder="0" placeholderTextColor={themeColors.textMuted} />
-              <Text style={[styles.hint, { color: themeColors.textMuted }]}>Short-term debts, bills due within 12 months</Text>
             </View>
           )}
         </View>
@@ -351,14 +375,16 @@ export const CalculatorScreen = ({ onOpenSettings, onNavigateExplanation }) => {
             {/* CTAs */}
             {calculated.zakatPayable > 0 && (
               <View style={styles.ctaGroup}>
-                <TouchableOpacity
-                  style={[styles.explainBtn, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}
-                  onPress={() => onNavigateExplanation && onNavigateExplanation(calculated)}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="information-circle-outline" size={18} color={themeColors.primary} />
-                  <Text style={[styles.explainBtnText, { color: themeColors.primary }]}>View Calculation Breakdown</Text>
-                </TouchableOpacity>
+                {onNavigateExplanation && (
+                  <TouchableOpacity
+                    style={[styles.explainBtn, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}
+                    onPress={() => onNavigateExplanation(calculated)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="information-circle-outline" size={18} color={themeColors.primary} />
+                    <Text style={[styles.explainBtnText, { color: themeColors.primary }]}>View Calculation Breakdown</Text>
+                  </TouchableOpacity>
+                )}
 
                 <TouchableOpacity
                   style={[styles.saveBtn, { backgroundColor: isSaved ? themeColors.successBg : themeColors.primary }]}
@@ -410,7 +436,6 @@ const styles = StyleSheet.create({
   groupHeader: { fontSize: 13, fontWeight: '800', marginBottom: 8, letterSpacing: 0.5 },
   inputLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 6 },
   input: { height: 48, borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 14, fontSize: 15, fontWeight: '600' },
-  hint: { fontSize: 11, marginTop: 4, fontStyle: 'italic' },
   computeBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     height: 52, borderRadius: 26, gap: 10, marginBottom: 24,

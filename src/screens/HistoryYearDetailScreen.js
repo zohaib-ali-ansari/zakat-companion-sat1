@@ -10,7 +10,7 @@ const formatCurrency = (amount) => `PKR ${Number(amount || 0).toLocaleString('en
 
 export default function HistoryYearDetailScreen({ year: yearProp, cycle: cycleProp, onBack, onNavigateEditPayment }) {
   const { t, isRTL, themeColors } = useLanguage();
-  const { completedCycles, deleteCompletedCycle } = useZakat();
+  const { completedCycles, deleteCompletedCycle, deleteYearHistory } = useZakat();
   const insets = useSafeAreaInsets();
 
   const [reportModalVisible, setReportModalVisible] = useState(false);
@@ -53,8 +53,9 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
         {
           text: t('deleteYearBtn'),
           style: 'destructive',
-          onPress: () => {
-            deleteCompletedCycle(cycle.id);
+          onPress: async () => {
+            if (deleteCompletedCycle) deleteCompletedCycle(cycle.id);
+            if (deleteYearHistory) await deleteYearHistory(year);
             onBack?.();
           },
         },
@@ -141,7 +142,7 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
 
             {payments.length > 0 ? (
               payments.map((record) => (
-                <View style={[styles.paymentCardItem, { backgroundColor: themeColors.cardBgAlt, borderColor: themeColors.border }]} key={record.id}>
+                <View style={[styles.paymentCardItem, { backgroundColor: themeColors.cardBgAlt, borderColor: themeColors.border }]} key={record.id || record._id}>
                   <View style={[styles.itemHeader, isRTL && styles.rtlRow]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.recipientText, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>

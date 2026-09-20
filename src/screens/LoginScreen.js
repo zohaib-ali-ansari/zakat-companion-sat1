@@ -1,69 +1,118 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
+} from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
-export const LoginScreen = ({ onLoginSuccess, onNavigateSignUp, onNavigateForgot }) => {
-  const { t, themeColors, isRTL } = useLanguage();
-  const [email, setEmail] = useState('hamza@example.com');
-  const [password, setPassword] = useState('••••••••');
+export const LoginScreen = ({ onLoginSuccess, onNavigateSignUp, onNavigateForgot, isLoading = false, submitError = '' }) => {
+  const { themeColors } = useLanguage();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(submitError || '');
+
+  const displayError = errorMessage || submitError;
+
+  useEffect(() => {
+    if (submitError) {
+      setErrorMessage(submitError);
+    }
+  }, [submitError]);
+
+  const handleLoginPress = () => {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      setErrorMessage('Email or password is wrong');
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(trimmedEmail)) {
+      setErrorMessage('Email or password is wrong');
+      return;
+    }
+
+    if (trimmedPassword.length < 6) {
+      setErrorMessage('Email or password is wrong');
+      return;
+    }
+
+    setErrorMessage('');
+    onLoginSuccess(trimmedEmail, trimmedPassword);
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         
         {/* Top Header Card */}
         <View style={styles.headerBox}>
           <View style={[styles.iconCircle, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
             <Ionicons name="lock-closed" size={32} color={themeColors.primary} />
           </View>
-          <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('loginTitle')}</Text>
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>{t('loginSub')}</Text>
+          <Text style={[styles.title, { color: themeColors.textPrimary }]}>Welcome Back</Text>
+          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>Sign in to continue</Text>
         </View>
 
         {/* Form Container */}
         <View style={styles.form}>
           {/* Email Input */}
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('emailLabel')}
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
+            Email
           </Text>
-          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border }]}>
             <Ionicons name="mail-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder={t('emailPlaceholder')}
+              style={[styles.input, { color: themeColors.textPrimary }, styles.leftAlignedInput]}
+              placeholder="Enter your email"
               placeholderTextColor={themeColors.textMuted}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(value) => {
+                setEmail(value);
+                if (errorMessage) setErrorMessage('');
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
 
           {/* Password Input */}
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('passwordLabel')}
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
+            Password
           </Text>
-          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border }]}>
             <Ionicons name="key-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder={t('passwordPlaceholder')}
+              style={[styles.input, { color: themeColors.textPrimary }, styles.leftAlignedInput]}
+              placeholder="Enter your password"
               placeholderTextColor={themeColors.textMuted}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(value) => {
+                setPassword(value);
+                if (errorMessage) setErrorMessage('');
+              }}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
@@ -75,37 +124,41 @@ export const LoginScreen = ({ onLoginSuccess, onNavigateSignUp, onNavigateForgot
             </TouchableOpacity>
           </View>
 
+          {displayError ? <Text style={styles.errorText}>{displayError}</Text> : null}
+
           {/* Forgot Password Link */}
           <TouchableOpacity style={styles.forgotBtn} onPress={onNavigateForgot}>
-            <Text style={[styles.forgotText, { color: themeColors.primary }]}>
-              {t('forgotPasswordLink')}
-            </Text>
+            <Text style={[styles.forgotText, { color: themeColors.primary }]}>Forgot Password?</Text>
           </TouchableOpacity>
 
           {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.submitBtn, { backgroundColor: themeColors.primary }]}
-            onPress={onLoginSuccess}
+            style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
+            onPress={handleLoginPress}
             activeOpacity={0.85}
+            disabled={isLoading}
           >
-            <Text style={styles.submitBtnText}>{t('loginBtn')}</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Text style={styles.submitBtnText}>Sign In</Text>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
         {/* Footer Navigation */}
         <View style={styles.footerRow}>
-          <Text style={[styles.footerText, { color: themeColors.textSecondary }]}>
-            {t('dontHaveAccount')}
-          </Text>
+          <Text style={[styles.footerText, { color: themeColors.textSecondary }]}>Don’t have an account?</Text>
           <TouchableOpacity onPress={onNavigateSignUp}>
-            <Text style={[styles.linkText, { color: themeColors.primary }]}>
-              {t('signUpLink')}
-            </Text>
+            <Text style={[styles.linkText, { color: themeColors.primary }]}>Sign Up</Text>
           </TouchableOpacity>
         </View>
 
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -155,8 +208,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 12,
   },
-  rtlText: {
-    textAlign: 'right',
+  leftAlignedText: {
+    textAlign: 'left',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -174,8 +227,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  rtlInput: {
-    textAlign: 'right',
+  leftAlignedInput: {
+    textAlign: 'left',
   },
   eyeIcon: {
     padding: 6,
@@ -188,6 +241,13 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  errorText: {
+    color: '#E11D48',
+    fontSize: 12,
+    marginTop: 8,
+    marginBottom: 4,
+    fontWeight: '600',
   },
   submitBtn: {
     flexDirection: 'row',
