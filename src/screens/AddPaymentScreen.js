@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
   StatusBar,
-} KeyboardAvoidingView,
+  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
