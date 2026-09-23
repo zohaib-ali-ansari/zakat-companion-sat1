@@ -67,7 +67,11 @@ export const SignUpScreen = ({ onSignUpSuccess, onNavigateLogin, isLoading = fal
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <ScrollView
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"

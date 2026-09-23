@@ -65,7 +65,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendOtpEmail = async ({ email, name, otp, purpose, resetLink }) => {
+const sendOtpEmail = async ({ email, name, otp, purpose }) => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn('SMTP credentials missing. Email not sent.');
     return {
@@ -74,9 +74,7 @@ const sendOtpEmail = async ({ email, name, otp, purpose, resetLink }) => {
     };
   }
 
-  const content = purpose === 'reset' && resetLink
-    ? buildResetLinkEmailContent({ name, resetLink })
-    : buildOtpEmailContent({ name, otp, purpose });
+  const content = buildOtpEmailContent({ name, otp, purpose });
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
@@ -86,7 +84,7 @@ const sendOtpEmail = async ({ email, name, otp, purpose, resetLink }) => {
     html: content.html,
   });
 
-  return { success: true, message: purpose === 'reset' ? 'Reset link sent successfully' : 'OTP email sent successfully' };
+  return { success: true, message: 'OTP email sent successfully' };
 };
 
 module.exports = {

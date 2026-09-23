@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +9,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 
@@ -40,7 +39,7 @@ export default function LiveRatesScreen({ onBack, onNavigateCalculator }) {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <View style={[styles.topHeader, { paddingTop: Math.max(insets.top + 4, 14) }]}>
+      <View style={[styles.topHeader, { paddingTop: 10, paddingBottom: 10 }]}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
           onPress={() => onBack?.()}

@@ -28,9 +28,36 @@ const registerUser = async (req, res) => {
     const normalizedEmail = email.toLowerCase();
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
+      if (!existingUser.isEmailVerified) {
+        const otp = generateOtp();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        existingUser.name = name;
+        existingUser.password = hashedPassword;
+        existingUser.otp = otp;
+        existingUser.otpExpiresAt = otpExpiresAt;
+        await existingUser.save();
+
+        await sendOtpEmail({
+          email: existingUser.email,
+          name: existingUser.name,
+          otp,
+          purpose: 'register',
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: 'OTP resent to your email. Please verify your account.',
+          userId: existingUser._id,
+          email: existingUser.email,
+          otpSent: true,
+        });
+      }
+
       return res.status(409).json({
         success: false,
-        message: 'User with this email already exists',
+        message: 'User with this email already exists and is verified. Please sign in.',
       });
     }
 
@@ -157,21 +184,18 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    const resetToken = require('../services/emailService').generateResetToken();
+    const otp = generateOtp();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    user.passwordResetOtp = resetToken;
+    user.passwordResetOtp = otp;
     user.passwordResetOtpExpiresAt = otpExpiresAt;
     await user.save();
-
-    const resetLink = `${process.env.APP_RESET_URL || 'http://localhost:8082'}/reset-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(user.email)}`;
 
     const emailResult = await sendOtpEmail({
       email: user.email,
       name: user.name,
-      otp: resetToken,
+      otp,
       purpose: 'reset',
-      resetLink,
     });
 
     if (!emailResult.success) {
@@ -183,15 +207,15 @@ const forgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Password reset link sent to your email.',
+      message: 'OTP sent to your email for password reset.',
       email: user.email,
-      resetLink,
+      otpSent: true,
     });
   } catch (error) {
     console.error('Forgot password error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to send password reset link',
+      message: 'Failed to send password reset OTP',
     });
   }
 };
@@ -199,12 +223,12 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, token, newPassword, confirmPassword } = req.body;
-    const resetValue = token || otp;
+    const resetValue = otp || token;
 
     if (!email || !resetValue || !newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
-        message: 'Email, reset token, new password, and confirm password are required',
+        message: 'Email, OTP, new password, and confirm password are required',
       });
     }
 
@@ -226,14 +250,14 @@ const resetPassword = async (req, res) => {
     if (!user.passwordResetOtp || user.passwordResetOtp !== resetValue) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid reset link or OTP',
+        message: 'Invalid OTP code',
       });
     }
 
     if (!user.passwordResetOtpExpiresAt || new Date(user.passwordResetOtpExpiresAt) < new Date()) {
       return res.status(400).json({
         success: false,
-        message: 'Reset link has expired',
+        message: 'OTP has expired',
       });
     }
 
@@ -258,6 +282,64 @@ const resetPassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to reset password',
+    });
+  }
+};
+
+const resendOtp = async (req, res) => {
+  try {
+    const { email, purpose } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const otp = generateOtp();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    if (purpose === 'reset') {
+      user.passwordResetOtp = otp;
+      user.passwordResetOtpExpiresAt = otpExpiresAt;
+    } else {
+      user.otp = otp;
+      user.otpExpiresAt = otpExpiresAt;
+    }
+    await user.save();
+
+    const emailResult = await sendOtpEmail({
+      email: user.email,
+      name: user.name,
+      otp,
+      purpose: purpose === 'reset' ? 'reset' : 'register',
+    });
+
+    if (!emailResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: emailResult.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'New OTP sent to your email.',
+    });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to resend OTP',
     });
   }
 };
@@ -289,6 +371,28 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (!user.isEmailVerified) {
+      const otp = generateOtp();
+      const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      user.otp = otp;
+      user.otpExpiresAt = otpExpiresAt;
+      await user.save();
+
+      await sendOtpEmail({
+        email: user.email,
+        name: user.name,
+        otp,
+        purpose: 'register',
+      });
+
+      return res.status(403).json({
+        success: false,
+        isEmailVerified: false,
+        email: user.email,
+        message: 'Your email address is not verified yet. A new 6-digit OTP code has been sent to your email.',
+      });
+    }
+
     const token = generateToken(user);
 
     return res.status(200).json({
@@ -316,4 +420,5 @@ module.exports = {
   forgotPassword,
   verifyRegistrationOtp,
   resetPassword,
+  resendOtp,
 };

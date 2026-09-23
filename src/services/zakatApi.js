@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const getApiBaseUrl = () => {
@@ -5,7 +6,10 @@ const getApiBaseUrl = () => {
     return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '');
   }
 
-  const host = Platform.OS === 'web' ? 'localhost' : '192.168.0.104';
+  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost || '';
+  const debuggerHost = hostUri ? hostUri.split(':')[0] : null;
+
+  const host = debuggerHost || (Platform.OS === 'web' ? 'localhost' : 'localhost');
   return `http://${host}:5000/api`;
 };
 

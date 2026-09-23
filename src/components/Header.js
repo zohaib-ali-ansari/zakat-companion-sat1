@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
@@ -12,13 +12,16 @@ export const Header = ({ onOpenSettings }) => {
   const avatars = ['wallet', 'person', 'star', 'sparkles'];
   const avatarIcon = avatars[currentUser?.avatar ?? 1] || 'person';
 
+  const topPadding = Math.max(insets.top || 0, StatusBar.currentHeight || 0, 20);
+
   return (
     <View
       style={[
         styles.headerContainer,
         {
           backgroundColor: themeColors.background,
-          paddingTop: Math.max(insets.top + 6, 16),
+          paddingTop: topPadding + 4,
+          paddingBottom: 12,
         },
         isRTL && styles.rtlContainer,
       ]}

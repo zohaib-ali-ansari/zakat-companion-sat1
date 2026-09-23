@@ -81,7 +81,11 @@ export default function AddPaymentScreen({ onBack, editingPayment }) {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <View style={[styles.topHeader, { paddingTop: Math.max(insets.top + 4, 14) }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={[styles.topHeader, { paddingTop: 10, paddingBottom: 10 }]}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
           onPress={() => onBack?.()}

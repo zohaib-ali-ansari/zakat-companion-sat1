@@ -27,6 +27,7 @@ export const ResetPasswordScreen = ({
   submitError = '',
 }) => {
   const { themeColors, isRTL } = useLanguage();
+  const [otpCode, setOtpCode] = useState(token || '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -38,13 +39,19 @@ export const ResetPasswordScreen = ({
     }
   }, [submitError]);
 
+  useEffect(() => {
+    if (token) {
+      setOtpCode(token);
+    }
+  }, [token]);
+
   const handleSubmit = async () => {
+    const trimmedOtp = otpCode.trim();
     const trimmedPassword = newPassword.trim();
     const trimmedConfirm = confirmPassword.trim();
 
-    if (!token || !email) {
-      setErrorMessage('This reset link is invalid or expired.');
-      Alert.alert('Invalid reset link', 'This reset link is invalid or expired.');
+    if (!trimmedOtp) {
+      setErrorMessage('Please enter the 6-digit OTP code sent to your email.');
       return;
     }
 
@@ -64,8 +71,9 @@ export const ResetPasswordScreen = ({
     }
 
     setErrorMessage('');
-    const result = await onSubmit?.(trimmedPassword, trimmedConfirm);
+    const result = await onSubmit?.(trimmedOtp, trimmedPassword, trimmedConfirm);
     if (result?.success) {
+      setOtpCode('');
       setNewPassword('');
       setConfirmPassword('');
     }
@@ -96,11 +104,37 @@ export const ResetPasswordScreen = ({
           </View>
           <Text style={[styles.title, { color: themeColors.textPrimary }]}>Reset Password</Text>
           <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
-            Create a new password for {email || 'your account'}.
+            Enter the 6-digit OTP sent to {email || 'your email'} and set a new password.
           </Text>
         </View>
 
         <View style={styles.form}>
+          {/* OTP Code Input */}
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
+            OTP Code
+          </Text>
+          <View
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
+            ]}
+          >
+            <Ionicons name="shield-checkmark-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, { color: themeColors.textPrimary, letterSpacing: 2 }, styles.leftAlignedInput]}
+              placeholder="Enter 6-digit OTP"
+              placeholderTextColor={themeColors.textMuted}
+              value={otpCode}
+              onChangeText={(value) => {
+                setOtpCode(value);
+                if (errorMessage) setErrorMessage('');
+              }}
+              keyboardType="number-pad"
+              maxLength={12}
+            />
+          </View>
+
+          {/* New Password */}
           <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
             New Password
           </Text>
@@ -132,6 +166,7 @@ export const ResetPasswordScreen = ({
             </TouchableOpacity>
           </View>
 
+          {/* Confirm Password */}
           <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
             Confirm Password
           </Text>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, StatusBar } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, StatusBar } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 import { ReportExportModal } from '../components/ReportExportModal';
@@ -68,7 +68,7 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
       <View style={styles.screen}>
         {/* Top Bar */}
-        <View style={[styles.topBar, { borderBottomColor: themeColors.border, paddingTop: Math.max(insets.top, 10) }, isRTL && styles.rtlRow]}>
+        <View style={[styles.topBar, { borderBottomColor: themeColors.border, paddingTop: 10, paddingBottom: 10 }, isRTL && styles.rtlRow]}>
           <Pressable onPress={() => onBack?.()} accessibilityLabel="Back to history">
             <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color={themeColors.primary} />
           </Pressable>

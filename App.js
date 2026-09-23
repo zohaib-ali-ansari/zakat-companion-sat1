@@ -26,12 +26,13 @@ import { SplashScreen } from './src/screens/SplashScreen';
 import { TermsOfServiceScreen } from './src/screens/TermsOfServiceScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
 import { ZakatGuidanceScreen } from './src/screens/ZakatGuidanceScreen';
-
 import DisasterReliefScreen from './src/screens/DisasterReliefScreen';
 import OrganizationPortalScreen from './src/screens/OrganizationPortalScreen';
 import LiveRatesScreen from './src/screens/LiveRatesScreen';
 import { ReportExportModal } from './src/components/ReportExportModal';
-import { forgotPassword, loginUser, registerUser, resetPassword } from './src/services/authApi';
+import { CustomAlertModal } from './src/components/CustomAlertModal';
+import { OtpVerificationScreen } from './src/screens/OtpVerificationScreen';
+import { forgotPassword, loginUser, registerUser, resetPassword, resendOtpApi, verifyRegistrationOtp } from './src/services/authApi';
 
 function MainAppContent() {
   const { themeColors } = useLanguage();
@@ -51,6 +52,38 @@ function MainAppContent() {
   const [authError, setAuthError] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [resetToken, setResetToken] = useState('');
+  const [pendingEmail, setPendingEmail] = useState('');
+
+  // Custom Alert Modal state
+  const [customAlert, setCustomAlert] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    cancelText: null,
+    onConfirm: null,
+    onCancel: null,
+  });
+
+  const showAlert = (title, message, type = 'info', confirmText = 'OK', onConfirm = null, cancelText = null, onCancel = null) => {
+    setCustomAlert({
+      visible: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      onConfirm: () => {
+        setCustomAlert((prev) => ({ ...prev, visible: false }));
+        onConfirm?.();
+      },
+      onCancel: () => {
+        setCustomAlert((prev) => ({ ...prev, visible: false }));
+        onCancel?.();
+      },
+    });
+  };
 
   useEffect(() => {
     const parseResetUrl = (url) => {
@@ -71,8 +104,6 @@ function MainAppContent() {
       } catch (error) {
         console.warn('Unable to parse reset link:', error);
       }
-
-      Alert.alert('Invalid reset link', 'The reset link is missing the required token or email.');
     };
 
     const subscription = Linking.addEventListener('url', ({ url }) => parseResetUrl(url));
@@ -94,20 +125,20 @@ function MainAppContent() {
 
     if (!trimmedEmail || !trimmedPassword) {
       setAuthError('Email or password is wrong');
-      Alert.alert('Login failed', 'Email or password is wrong');
+      showAlert('Login Failed', 'Email or password is wrong', 'error');
       return;
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(trimmedEmail)) {
       setAuthError('Email or password is wrong');
-      Alert.alert('Login failed', 'Email or password is wrong');
+      showAlert('Login Failed', 'Email or password is wrong', 'error');
       return;
     }
 
     if (trimmedPassword.length < 6) {
       setAuthError('Email or password is wrong');
-      Alert.alert('Login failed', 'Email or password is wrong');
+      showAlert('Login Failed', 'Email or password is wrong', 'error');
       return;
     }
 
@@ -122,9 +153,22 @@ function MainAppContent() {
         setAuthFlow('app');
       }
     } catch (error) {
-      const message = 'Email or password is wrong';
+      if (error?.isEmailVerified === false) {
+        setPendingEmail(error.email || trimmedEmail);
+        setAuthError('Your email address is not verified yet.');
+        showAlert(
+          'Verification Required',
+          'Your account is not verified yet. Please enter the 6-digit OTP sent to your email address.',
+          'warning',
+          'Verify OTP Now',
+          () => setAuthFlow('otp')
+        );
+        return;
+      }
+
+      const message = error?.message || 'Email or password is wrong';
       setAuthError(message);
-      Alert.alert('Login failed', message);
+      showAlert('Login Failed', message, 'error');
     } finally {
       setIsAuthenticating(false);
     }
@@ -137,20 +181,20 @@ function MainAppContent() {
 
     if (!trimmedName || !trimmedEmail || !trimmedPassword) {
       setAuthError('Please fill in all fields.');
-      Alert.alert('Missing details', 'Please fill in your name, email, and password.');
+      showAlert('Missing Details', 'Please fill in your name, email, and password.', 'warning');
       return;
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(trimmedEmail)) {
       setAuthError('Please enter a valid email address.');
-      Alert.alert('Invalid email', 'Please enter a valid email address.');
+      showAlert('Invalid Email', 'Please enter a valid email address.', 'warning');
       return;
     }
 
     if (trimmedPassword.length < 6) {
       setAuthError('Password must be at least 6 characters.');
-      Alert.alert('Weak password', 'Password must be at least 6 characters.');
+      showAlert('Weak Password', 'Password must be at least 6 characters long.', 'warning');
       return;
     }
 
@@ -160,19 +204,62 @@ function MainAppContent() {
     try {
       const result = await registerUser(trimmedName, trimmedEmail, trimmedPassword);
       if (result?.success) {
-        Alert.alert(
-          'OTP sent',
-          'A 6-digit OTP has been sent to your email address. Please verify it to complete registration.'
+        setPendingEmail(trimmedEmail);
+        setAuthFlow('otp');
+        showAlert(
+          'OTP Code Sent',
+          `A 6-digit verification OTP has been sent to ${trimmedEmail}. Please enter it below to activate your account.`,
+          'success'
         );
-        setAuthFlow('login');
       }
     } catch (error) {
       const message = error?.message || 'Unable to create account.';
       setAuthError(message);
-      Alert.alert('Signup failed', message);
+      showAlert('Sign Up Failed', message, 'error');
     } finally {
       setIsAuthenticating(false);
     }
+  };
+
+  const handleVerifyRegistrationOtp = async (otpValue) => {
+    if (!pendingEmail) {
+      setAuthError('Email missing for verification.');
+      return;
+    }
+
+    setAuthError('');
+    setIsAuthenticating(true);
+
+    try {
+      const result = await verifyRegistrationOtp(pendingEmail, otpValue);
+      if (result?.success) {
+        if (result.token) setAuthToken(result.token);
+        if (result.user) setCurrentUser(result.user);
+        setPendingEmail('');
+        showAlert(
+          'Account Verified',
+          'Your email has been verified successfully. Welcome to Zakat Companion!',
+          'success',
+          'Get Started',
+          () => setAuthFlow('app')
+        );
+      }
+    } catch (error) {
+      const message = error?.message || 'Invalid or expired OTP code.';
+      setAuthError(message);
+      showAlert('Verification Failed', message, 'error');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleResendOtp = async (purpose = 'register') => {
+    const targetEmail = pendingEmail || resetEmail;
+    if (!targetEmail) {
+      throw new Error('Email address not found.');
+    }
+    const result = await resendOtpApi(targetEmail, purpose);
+    return result;
   };
 
   const handleForgotPassword = async (emailValue) => {
@@ -180,14 +267,14 @@ function MainAppContent() {
 
     if (!trimmedEmail) {
       setAuthError('Please enter your email address.');
-      Alert.alert('Missing email', 'Please enter your email address.');
+      showAlert('Missing Email', 'Please enter your email address.', 'warning');
       return;
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(trimmedEmail)) {
       setAuthError('Please enter a valid email address.');
-      Alert.alert('Invalid email', 'Please enter a valid email address.');
+      showAlert('Invalid Email', 'Please enter a valid email address.', 'warning');
       return;
     }
 
@@ -197,24 +284,34 @@ function MainAppContent() {
     try {
       const result = await forgotPassword(trimmedEmail);
       if (result?.success) {
-        Alert.alert('Reset link sent', 'A password reset link has been sent to your email address.');
+        setResetEmail(trimmedEmail);
+        setPendingEmail(trimmedEmail);
+        showAlert(
+          'OTP Sent',
+          `A 6-digit password reset OTP code has been sent to ${trimmedEmail}.`,
+          'success',
+          'Enter OTP',
+          () => setAuthFlow('reset')
+        );
       }
       return result;
     } catch (error) {
       const message = error?.message || 'Unable to send reset instructions.';
       setAuthError(message);
-      Alert.alert('Reset failed', message);
+      showAlert('Reset Request Failed', message, 'error');
       return null;
     } finally {
       setIsAuthenticating(false);
     }
   };
 
-  const handleResetPassword = async (newPasswordValue, confirmPasswordValue) => {
-    if (!resetEmail || !resetToken) {
-      const message = 'This reset link is invalid or expired.';
+  const handleResetPassword = async (otpCode, newPasswordValue, confirmPasswordValue) => {
+    const targetEmail = resetEmail || pendingEmail;
+
+    if (!targetEmail || !otpCode) {
+      const message = 'Please enter your email and the 6-digit OTP code.';
       setAuthError(message);
-      Alert.alert('Invalid reset link', message);
+      showAlert('Missing OTP', message, 'warning');
       return { success: false };
     }
 
@@ -223,17 +320,23 @@ function MainAppContent() {
 
     try {
       const result = await resetPassword({
-        email: resetEmail,
-        token: resetToken,
+        email: targetEmail,
+        otp: otpCode,
         newPassword: newPasswordValue,
         confirmPassword: confirmPasswordValue,
       });
 
       if (result?.success) {
-        Alert.alert('Password updated', 'Your password has been reset successfully.');
         setResetToken('');
         setResetEmail('');
-        setAuthFlow('login');
+        setPendingEmail('');
+        showAlert(
+          'Password Reset',
+          'Your password has been updated successfully. Please sign in with your new password.',
+          'success',
+          'Sign In',
+          () => setAuthFlow('login')
+        );
         return { success: true };
       }
 
@@ -241,7 +344,7 @@ function MainAppContent() {
     } catch (error) {
       const message = error?.message || 'Unable to reset your password.';
       setAuthError(message);
-      Alert.alert('Reset failed', message);
+      showAlert('Reset Failed', message, 'error');
       return { success: false };
     } finally {
       setIsAuthenticating(false);
@@ -279,6 +382,19 @@ function MainAppContent() {
     );
   }
 
+  if (authFlow === 'otp') {
+    return (
+      <OtpVerificationScreen
+        email={pendingEmail}
+        onVerifyOtp={handleVerifyRegistrationOtp}
+        onResendOtp={() => handleResendOtp('register')}
+        onNavigateLogin={() => setAuthFlow('login')}
+        isLoading={isAuthenticating}
+        submitError={authError}
+      />
+    );
+  }
+
   if (authFlow === 'forgot') {
     return (
       <ForgotPasswordScreen
@@ -293,12 +409,13 @@ function MainAppContent() {
   if (authFlow === 'reset') {
     return (
       <ResetPasswordScreen
-        email={resetEmail}
+        email={resetEmail || pendingEmail}
         token={resetToken}
         onSubmit={handleResetPassword}
         onNavigateLogin={() => {
           setResetToken('');
           setResetEmail('');
+          setPendingEmail('');
           setAuthFlow('login');
         }}
         isLoading={isAuthenticating}
@@ -480,6 +597,7 @@ function MainAppContent() {
         onClose={() => setReportModalVisible(false)}
         year="2024"
       />
+      <CustomAlertModal {...customAlert} />
     </View>
   );
 }
