@@ -11,6 +11,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,13 +20,16 @@ import { useLanguage } from '../context/LanguageContext';
 
 export const OtpVerificationScreen = ({
   email,
+  title,
+  subtitle,
+  buttonText,
   onVerifyOtp,
   onResendOtp,
   onNavigateLogin,
   isLoading = false,
   submitError = '',
 }) => {
-  const { themeColors, isRTL } = useLanguage();
+  const { t, themeColors, isRTL } = useLanguage();
   const [otp, setOtp] = useState('');
   const [errorMessage, setErrorMessage] = useState(submitError || '');
   const [countdown, setCountdown] = useState(60);
@@ -81,98 +86,105 @@ export const OtpVerificationScreen = ({
     }
   };
 
+  const screenTitle = title || 'Verify OTP';
+  const screenSubtitle = subtitle || `Enter the 6-digit verification code sent to`;
+  const submitText = buttonText || 'Verify & Continue';
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.headerBox}>
-            <View
-              style={[
-                styles.iconCircle,
-                { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder },
-              ]}
-            >
-              <Ionicons name="shield-checkmark-outline" size={34} color={themeColors.primary} />
-            </View>
-            <Text style={[styles.title, { color: themeColors.textPrimary }]}>Verify OTP</Text>
-            <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
-              Enter the 6-digit verification code sent to{'\n'}
-              <Text style={{ fontWeight: '700', color: themeColors.textPrimary }}>{email || 'your email'}</Text>
-            </Text>
-          </View>
-
-          <View style={styles.form}>
-            <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-              6-Digit Verification Code
-            </Text>
-            <View
-              style={[
-                styles.inputWrapper,
-                { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
-              ]}
-            >
-              <Ionicons name="keypad-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: themeColors.textPrimary }]}
-                placeholder="123456"
-                placeholderTextColor={themeColors.textMuted}
-                value={otp}
-                onChangeText={(val) => {
-                  setOtp(val);
-                  if (errorMessage) setErrorMessage('');
-                }}
-                keyboardType="number-pad"
-                maxLength={6}
-                autoFocus
-              />
-            </View>
-
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-            <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
-              onPress={handleVerify}
-              activeOpacity={0.85}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.submitBtnText}>Verify & Continue</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.resendContainer}>
-              <Text style={[styles.resendText, { color: themeColors.textSecondary }]}>
-                Didn't receive code?{' '}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.headerBox}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder },
+                ]}
+              >
+                <Ionicons name="shield-checkmark-outline" size={34} color={themeColors.primary} />
+              </View>
+              <Text style={[styles.title, { color: themeColors.textPrimary }]}>{screenTitle}</Text>
+              <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+                {screenSubtitle}{'\n'}
+                <Text style={{ fontWeight: '700', color: themeColors.textPrimary }}>{email || 'your email'}</Text>
               </Text>
-              <TouchableOpacity onPress={handleResendPress} disabled={!canResend || isResending}>
-                <Text
-                  style={[
-                    styles.resendBtnText,
-                    { color: canResend ? themeColors.primary : themeColors.textMuted },
-                  ]}
-                >
-                  {isResending ? 'Resending...' : canResend ? 'Resend OTP' : `Resend in ${countdown}s`}
-                </Text>
-              </TouchableOpacity>
             </View>
-          </View>
 
-          <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
-            <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
-            <Text style={[styles.backBtnText, { color: themeColors.primary }]}>Back to Sign In</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            <View style={styles.form}>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+                6-Digit Verification Code
+              </Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
+                ]}
+              >
+                <Ionicons name="keypad-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: themeColors.textPrimary }]}
+                  placeholder="123456"
+                  placeholderTextColor={themeColors.textMuted}
+                  value={otp}
+                  onChangeText={(val) => {
+                    setOtp(val);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  autoFocus
+                />
+              </View>
+
+              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+              <TouchableOpacity
+                style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
+                onPress={handleVerify}
+                activeOpacity={0.85}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.submitBtnText}>{submitText}</Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.resendContainer}>
+                <Text style={[styles.resendText, { color: themeColors.textSecondary }]}>
+                  Didn't receive code?{' '}
+                </Text>
+                <TouchableOpacity onPress={handleResendPress} disabled={!canResend || isResending}>
+                  <Text
+                    style={[
+                      styles.resendBtnText,
+                      { color: canResend ? themeColors.primary : themeColors.textMuted },
+                    ]}
+                  >
+                    {isResending ? 'Resending...' : canResend ? 'Resend OTP' : `Resend in ${countdown}s`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
+              <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
+              <Text style={[styles.backBtnText, { color: themeColors.primary }]}>Back to Sign In</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -184,7 +196,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingTop: 32,
+    paddingBottom: 60,
     flexGrow: 1,
     justifyContent: 'center',
   },

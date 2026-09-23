@@ -17,7 +17,13 @@ import {
 } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
-export const ForgotPasswordScreen = ({ onNavigateLogin, onSendResetRequest, isLoading = false, submitError = '' }) => {
+export const ForgotPasswordScreen = ({
+  onNavigateLogin,
+  onNavigateReset,
+  onSendResetRequest,
+  isLoading = false,
+  submitError = '',
+}) => {
   const { t, themeColors, isRTL } = useLanguage();
   const [email, setEmail] = useState('');
   const [isSent, setIsSent] = useState(false);
@@ -47,6 +53,7 @@ export const ForgotPasswordScreen = ({ onNavigateLogin, onSendResetRequest, isLo
     const result = await onSendResetRequest?.(trimmedEmail);
     if (result?.success) {
       setIsSent(true);
+      onNavigateReset?.(trimmedEmail);
     }
   };
 
@@ -56,69 +63,95 @@ export const ForgotPasswordScreen = ({ onNavigateLogin, onSendResetRequest, isLo
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.headerBox}>
-          <View style={[styles.iconCircle, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
-            <Ionicons name="keypad-outline" size={32} color={themeColors.primary} />
-          </View>
-          <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('forgotTitle')}</Text>
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>{t('forgotSub')}</Text>
-        </View>
-
-        {isSent ? (
-          <View style={[styles.successCard, { backgroundColor: themeColors.successBg, borderColor: themeColors.success }]}>
-            <Ionicons name="checkmark-circle" size={28} color={themeColors.success} />
-            <Text style={[styles.successText, { color: themeColors.textPrimary }]}>
-              {t('resetSentSuccess')}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.form}>
-            <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-              {t('emailLabel')}
-            </Text>
-            <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border }]}>
-              <Ionicons name="mail-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-                placeholder={t('emailPlaceholder')}
-                placeholderTextColor={themeColors.textMuted}
-                value={email}
-                onChangeText={(value) => {
-                  setEmail(value);
-                  if (errorMessage) setErrorMessage('');
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.headerBox}>
+              <View style={[styles.iconCircle, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
+                <Ionicons name="keypad-outline" size={32} color={themeColors.primary} />
+              </View>
+              <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('forgotTitle')}</Text>
+              <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>{t('forgotSub')}</Text>
             </View>
 
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+            {isSent ? (
+              <View style={styles.form}>
+                <View style={[styles.successCard, { backgroundColor: themeColors.successBg, borderColor: themeColors.success }]}>
+                  <Ionicons name="checkmark-circle" size={28} color={themeColors.success} />
+                  <Text style={[styles.successText, { color: themeColors.textPrimary }]}>
+                    {t('resetSentSuccess')}
+                  </Text>
+                </View>
 
-            <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
-              onPress={handleSend}
-              activeOpacity={0.85}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.submitBtnText}>{t('sendResetLinkBtn')}</Text>
-              )}
+                <TouchableOpacity
+                  style={[styles.submitBtn, { backgroundColor: themeColors.primary, marginBottom: 16 }]}
+                  onPress={() => onNavigateReset?.(email.trim())}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.submitBtnText}>{t('enterOtpBtn')}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.form}>
+                <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+                  {t('emailLabel')}
+                </Text>
+                <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border }]}>
+                  <Ionicons name="mail-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+                    placeholder={t('emailPlaceholder')}
+                    placeholderTextColor={themeColors.textMuted}
+                    value={email}
+                    onChangeText={(value) => {
+                      setEmail(value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+                <TouchableOpacity
+                  style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
+                  onPress={handleSend}
+                  activeOpacity={0.85}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.submitBtnText}>{t('sendResetLinkBtn')}</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.alreadyHaveOtpBtn}
+                  onPress={() => onNavigateReset?.(email.trim())}
+                >
+                  <Text style={[styles.alreadyHaveOtpText, { color: themeColors.primary }]}>
+                    {t('enterOtpBtn')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
+              <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
+              <Text style={[styles.backBtnText, { color: themeColors.primary }]}>
+                {t('backToLogin')}
+              </Text>
             </TouchableOpacity>
-          </View>
-        )}
-
-        <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
-          <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
-          <Text style={[styles.backBtnText, { color: themeColors.primary }]}>
-            {t('backToLogin')}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -130,7 +163,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingTop: 32,
+    paddingBottom: 60,
     flexGrow: 1,
     justifyContent: 'center',
   },
@@ -236,5 +270,16 @@ const styles = StyleSheet.create({
   backBtnText: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  alreadyHaveOtpBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    paddingVertical: 8,
+  },
+  alreadyHaveOtpText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

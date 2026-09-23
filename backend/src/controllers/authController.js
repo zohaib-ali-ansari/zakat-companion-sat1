@@ -220,6 +220,52 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+const verifyResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required',
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (!user.passwordResetOtp || user.passwordResetOtp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP code',
+      });
+    }
+
+    if (!user.passwordResetOtpExpiresAt || new Date(user.passwordResetOtpExpiresAt) < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully. You can now set your new password.',
+    });
+  } catch (error) {
+    console.error('Verify reset OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to verify OTP',
+    });
+  }
+};
+
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, token, newPassword, confirmPassword } = req.body;
@@ -419,6 +465,7 @@ module.exports = {
   loginUser,
   forgotPassword,
   verifyRegistrationOtp,
+  verifyResetOtp,
   resetPassword,
   resendOtp,
 };

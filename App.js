@@ -32,7 +32,8 @@ import LiveRatesScreen from './src/screens/LiveRatesScreen';
 import { ReportExportModal } from './src/components/ReportExportModal';
 import { CustomAlertModal } from './src/components/CustomAlertModal';
 import { OtpVerificationScreen } from './src/screens/OtpVerificationScreen';
-import { forgotPassword, loginUser, registerUser, resetPassword, resendOtpApi, verifyRegistrationOtp } from './src/services/authApi';
+import { forgotPassword, loginUser, registerUser, resetPassword, resendOtpApi, verifyRegistrationOtp, verifyResetOtpApi } from './src/services/authApi';
+import { getAuthToken, saveAuthToken, getUserData, saveUserData, clearAuthStorage } from './src/services/storage';
 
 function MainAppContent() {
   const { themeColors } = useLanguage();
@@ -84,6 +85,25 @@ function MainAppContent() {
       },
     });
   };
+
+  useEffect(() => {
+    const loadStoredAuth = async () => {
+      try {
+        const storedToken = await getAuthToken();
+        const storedUser = await getUserData();
+
+        if (storedToken) {
+          setAuthToken(storedToken);
+          if (storedUser) setCurrentUser(storedUser);
+          setAuthFlow('app');
+        }
+      } catch (err) {
+        console.warn('Error loading stored auth:', err);
+      }
+    };
+
+    loadStoredAuth();
+  }, []);
 
   useEffect(() => {
     const parseResetUrl = (url) => {
@@ -149,7 +169,11 @@ function MainAppContent() {
       const result = await loginUser(trimmedEmail, trimmedPassword);
       if (result?.token) {
         setAuthToken(result.token);
-        if (result.user) setCurrentUser(result.user);
+        await saveAuthToken(result.token);
+        if (result.user) {
+          setCurrentUser(result.user);
+          await saveUserData(result.user);
+        }
         setAuthFlow('app');
       }
     } catch (error) {
@@ -233,8 +257,14 @@ function MainAppContent() {
     try {
       const result = await verifyRegistrationOtp(pendingEmail, otpValue);
       if (result?.success) {
-        if (result.token) setAuthToken(result.token);
-        if (result.user) setCurrentUser(result.user);
+        if (result.token) {
+          setAuthToken(result.token);
+          await saveAuthToken(result.token);
+        }
+        if (result.user) {
+          setCurrentUser(result.user);
+          await saveUserData(result.user);
+        }
         setPendingEmail('');
         showAlert(
           'Account Verified',
@@ -286,12 +316,11 @@ function MainAppContent() {
       if (result?.success) {
         setResetEmail(trimmedEmail);
         setPendingEmail(trimmedEmail);
+        setAuthFlow('forgotOtp');
         showAlert(
-          'OTP Sent',
+          'OTP Code Sent',
           `A 6-digit password reset OTP code has been sent to ${trimmedEmail}.`,
-          'success',
-          'Enter OTP',
-          () => setAuthFlow('reset')
+          'success'
         );
       }
       return result;
@@ -305,10 +334,42 @@ function MainAppContent() {
     }
   };
 
+  const handleVerifyResetOtp = async (otpValue) => {
+    const targetEmail = resetEmail || pendingEmail;
+    if (!targetEmail) {
+      setAuthError('Email missing for verification.');
+      showAlert('Missing Email', 'Email address is missing for verification.', 'warning');
+      return;
+    }
+
+    setAuthError('');
+    setIsAuthenticating(true);
+
+    try {
+      const result = await verifyResetOtpApi(targetEmail, otpValue);
+      if (result?.success) {
+        setResetToken(otpValue);
+        setAuthFlow('reset');
+        showAlert(
+          'OTP Verified',
+          'Your OTP code has been verified. Please enter your new password.',
+          'success'
+        );
+      }
+    } catch (error) {
+      const message = error?.message || 'Invalid or expired OTP code.';
+      setAuthError(message);
+      showAlert('Verification Failed', message, 'error');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
   const handleResetPassword = async (otpCode, newPasswordValue, confirmPasswordValue) => {
     const targetEmail = resetEmail || pendingEmail;
+    const finalOtp = resetToken || otpCode;
 
-    if (!targetEmail || !otpCode) {
+    if (!targetEmail || !finalOtp) {
       const message = 'Please enter your email and the 6-digit OTP code.';
       setAuthError(message);
       showAlert('Missing OTP', message, 'warning');
@@ -321,7 +382,7 @@ function MainAppContent() {
     try {
       const result = await resetPassword({
         email: targetEmail,
-        otp: otpCode,
+        otp: finalOtp,
         newPassword: newPasswordValue,
         confirmPassword: confirmPasswordValue,
       });
@@ -399,7 +460,30 @@ function MainAppContent() {
     return (
       <ForgotPasswordScreen
         onNavigateLogin={() => setAuthFlow('login')}
+        onNavigateReset={(em) => {
+          if (em) {
+            setResetEmail(em);
+            setPendingEmail(em);
+          }
+          setAuthFlow('forgotOtp');
+        }}
         onSendResetRequest={handleForgotPassword}
+        isLoading={isAuthenticating}
+        submitError={authError}
+      />
+    );
+  }
+
+  if (authFlow === 'forgotOtp') {
+    return (
+      <OtpVerificationScreen
+        email={resetEmail || pendingEmail}
+        title="Verify Reset OTP"
+        subtitle="Enter the 6-digit code sent to reset your password for"
+        buttonText="Verify & Set New Password"
+        onVerifyOtp={handleVerifyResetOtp}
+        onResendOtp={() => handleResendOtp('reset')}
+        onNavigateLogin={() => setAuthFlow('login')}
         isLoading={isAuthenticating}
         submitError={authError}
       />
@@ -428,7 +512,8 @@ function MainAppContent() {
     return (
       <ProfileSettingsScreen
         onClose={() => setActiveTab('home')}
-        onSignOut={() => {
+        onSignOut={async () => {
+          await clearAuthStorage();
           setAuthToken(null);
           setCurrentUser(null);
           setAuthFlow('login');

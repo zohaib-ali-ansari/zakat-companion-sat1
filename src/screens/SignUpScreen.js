@@ -69,14 +69,15 @@ export const SignUpScreen = ({ onSignUpSuccess, onNavigateLogin, isLoading = fal
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 60 }]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
         
         {/* Header */}
         <View style={styles.headerBox}>
@@ -180,6 +181,7 @@ export const SignUpScreen = ({ onSignUpSuccess, onNavigateLogin, isLoading = fal
         </View>
 
       </ScrollView>
+      </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

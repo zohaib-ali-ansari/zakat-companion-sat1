@@ -89,6 +89,24 @@ export const verifyRegistrationOtp = async (email, otp) => {
   return data;
 };
 
+export const verifyResetOtpApi = async (email, otp) => {
+  const response = await fetchWithTimeout(`${api}/auth/verify-reset-otp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, otp }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'OTP verification failed');
+  }
+
+  return data;
+};
+
 export const resendOtpApi = async (email, purpose = 'register') => {
   const response = await fetchWithTimeout(`${api}/auth/resend-otp`, {
     method: 'POST',

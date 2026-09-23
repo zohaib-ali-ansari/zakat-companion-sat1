@@ -26,7 +26,7 @@ export const ResetPasswordScreen = ({
   isLoading = false,
   submitError = '',
 }) => {
-  const { themeColors, isRTL } = useLanguage();
+  const { t, themeColors, isRTL } = useLanguage();
   const [otpCode, setOtpCode] = useState(token || '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -85,15 +85,16 @@ export const ResetPasswordScreen = ({
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
-        <View style={styles.headerBox}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.headerBox}>
           <View
             style={[
               styles.iconCircle,
@@ -102,41 +103,45 @@ export const ResetPasswordScreen = ({
           >
             <Ionicons name="lock-open-outline" size={32} color={themeColors.primary} />
           </View>
-          <Text style={[styles.title, { color: themeColors.textPrimary }]}>Reset Password</Text>
+          <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('resetPasswordTitle')}</Text>
           <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
-            Enter the 6-digit OTP sent to {email || 'your email'} and set a new password.
+            {token ? 'Enter and confirm your new password below.' : (email ? `${t('resetPasswordSub')} (${email})` : t('resetPasswordSub'))}
           </Text>
         </View>
 
         <View style={styles.form}>
-          {/* OTP Code Input */}
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
-            OTP Code
-          </Text>
-          <View
-            style={[
-              styles.inputWrapper,
-              { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
-            ]}
-          >
-            <Ionicons name="shield-checkmark-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: themeColors.textPrimary, letterSpacing: 2 }, styles.leftAlignedInput]}
-              placeholder="Enter 6-digit OTP"
-              placeholderTextColor={themeColors.textMuted}
-              value={otpCode}
-              onChangeText={(value) => {
-                setOtpCode(value);
-                if (errorMessage) setErrorMessage('');
-              }}
-              keyboardType="number-pad"
-              maxLength={12}
-            />
-          </View>
+          {/* OTP Code Input (only shown if not already verified via Step 2) */}
+          {!token ? (
+            <>
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+                {t('otpLabel')}
+              </Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
+                ]}
+              >
+                <Ionicons name="shield-checkmark-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: themeColors.textPrimary, letterSpacing: 2 }, isRTL && styles.rtlInput]}
+                  placeholder={t('otpPlaceholder')}
+                  placeholderTextColor={themeColors.textMuted}
+                  value={otpCode}
+                  onChangeText={(value) => {
+                    setOtpCode(value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  keyboardType="number-pad"
+                  maxLength={12}
+                />
+              </View>
+            </>
+          ) : null}
 
           {/* New Password */}
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
-            New Password
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+            {t('newPasswordLabel')}
           </Text>
           <View
             style={[
@@ -146,8 +151,8 @@ export const ResetPasswordScreen = ({
           >
             <Ionicons name="key-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, styles.leftAlignedInput]}
-              placeholder="Enter new password"
+              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+              placeholder={t('newPasswordPlaceholder')}
               placeholderTextColor={themeColors.textMuted}
               value={newPassword}
               onChangeText={(value) => {
@@ -167,8 +172,8 @@ export const ResetPasswordScreen = ({
           </View>
 
           {/* Confirm Password */}
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, styles.leftAlignedText]}>
-            Confirm Password
+          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+            {t('confirmNewPasswordLabel')}
           </Text>
           <View
             style={[
@@ -178,8 +183,8 @@ export const ResetPasswordScreen = ({
           >
             <Ionicons name="keypad-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, styles.leftAlignedInput]}
-              placeholder="Confirm new password"
+              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+              placeholder={t('confirmNewPasswordPlaceholder')}
               placeholderTextColor={themeColors.textMuted}
               value={confirmPassword}
               onChangeText={(value) => {
@@ -202,16 +207,17 @@ export const ResetPasswordScreen = ({
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitBtnText}>Reset Password</Text>
+              <Text style={styles.submitBtnText}>{t('resetPasswordBtn')}</Text>
             )}
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
           <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
-          <Text style={[styles.backBtnText, { color: themeColors.primary }]}>Back to login</Text>
+          <Text style={[styles.backBtnText, { color: themeColors.primary }]}>{t('backToLogin')}</Text>
         </TouchableOpacity>
       </ScrollView>
+      </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -223,7 +229,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingTop: 32,
+    paddingBottom: 60,
     flexGrow: 1,
     justifyContent: 'center',
   },
