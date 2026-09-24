@@ -55,6 +55,7 @@ export const OtpVerificationScreen = ({
   }, [countdown]);
 
   const handleVerify = () => {
+    if (isLoading) return;
     const trimmedOtp = otp.trim();
     if (!trimmedOtp) {
       setErrorMessage('Please enter the 6-digit OTP code.');

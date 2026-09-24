@@ -265,13 +265,12 @@ function MainAppContent() {
           setCurrentUser(result.user);
           await saveUserData(result.user);
         }
+        setAuthFlow('app');
         setPendingEmail('');
         showAlert(
           'Account Verified',
           'Your email has been verified successfully. Welcome to Zakat Companion!',
-          'success',
-          'Get Started',
-          () => setAuthFlow('app')
+          'success'
         );
       }
     } catch (error) {
