@@ -223,15 +223,17 @@ const forgotPassword = async (req, res) => {
 const verifyResetOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedOtp = String(otp || '').trim();
 
-    if (!email || !otp) {
+    if (!normalizedEmail || !normalizedOtp) {
       return res.status(400).json({
         success: false,
         message: 'Email and OTP are required',
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -239,7 +241,10 @@ const verifyResetOtp = async (req, res) => {
       });
     }
 
-    if (!user.passwordResetOtp || user.passwordResetOtp !== otp) {
+    const storedOtp = String(user.passwordResetOtp || '').trim();
+
+    if (!storedOtp || storedOtp !== normalizedOtp) {
+      console.warn(`[OTP] Mismatch for ${normalizedEmail}: received "${normalizedOtp}", expected "${storedOtp}"`);
       return res.status(400).json({
         success: false,
         message: 'Invalid OTP code',
@@ -269,9 +274,10 @@ const verifyResetOtp = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, token, newPassword, confirmPassword } = req.body;
-    const resetValue = otp || token;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const resetValue = String(otp || token || '').trim();
 
-    if (!email || !resetValue || !newPassword || !confirmPassword) {
+    if (!normalizedEmail || !resetValue || !newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
         message: 'Email, OTP, new password, and confirm password are required',
@@ -285,7 +291,7 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -293,7 +299,10 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    if (!user.passwordResetOtp || user.passwordResetOtp !== resetValue) {
+    const storedOtp = String(user.passwordResetOtp || '').trim();
+
+    if (!storedOtp || storedOtp !== resetValue) {
+      console.warn(`[ResetPassword] OTP Mismatch for ${normalizedEmail}: received "${resetValue}", expected "${storedOtp}"`);
       return res.status(400).json({
         success: false,
         message: 'Invalid OTP code',
@@ -318,6 +327,8 @@ const resetPassword = async (req, res) => {
     user.passwordResetOtp = null;
     user.passwordResetOtpExpiresAt = null;
     await user.save();
+
+    console.log(`[ResetPassword] Password successfully updated for ${normalizedEmail}`);
 
     return res.status(200).json({
       success: true,

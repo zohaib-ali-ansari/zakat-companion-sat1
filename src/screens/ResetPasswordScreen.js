@@ -1,9 +1,8 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -11,27 +10,35 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../context/LanguageContext';
 
+const RESET_EMAIL_KEY = '@zakat_reset_email';
+const RESET_OTP_KEY = '@zakat_reset_otp';
+
 export const ResetPasswordScreen = ({
-  email,
-  token,
+  email = '',
+  token = '',
   onSubmit,
   onNavigateLogin,
+  onNavigateForgot,
   isLoading = false,
   submitError = '',
 }) => {
   const { t, themeColors, isRTL } = useLanguage();
-  const [otpCode, setOtpCode] = useState(token || '');
+  const [activeEmail, setActiveEmail] = useState(email || '');
+  const [activeToken, setActiveToken] = useState(token || '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState(submitError || '');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (submitError) {
@@ -40,18 +47,41 @@ export const ResetPasswordScreen = ({
   }, [submitError]);
 
   useEffect(() => {
-    if (token) {
-      setOtpCode(token);
-    }
-  }, [token]);
+    const syncSession = async () => {
+      try {
+        if (email) {
+          setActiveEmail(email);
+          await AsyncStorage.setItem(RESET_EMAIL_KEY, email);
+        } else {
+          const storedEmail = await AsyncStorage.getItem(RESET_EMAIL_KEY);
+          if (storedEmail) setActiveEmail(storedEmail);
+        }
+
+        if (token) {
+          setActiveToken(token);
+          await AsyncStorage.setItem(RESET_OTP_KEY, token);
+        } else {
+          const storedToken = await AsyncStorage.getItem(RESET_OTP_KEY);
+          if (storedToken) setActiveToken(storedToken);
+        }
+      } catch (err) {
+        console.warn('Error reading reset session storage:', err);
+      }
+    };
+
+    syncSession();
+  }, [email, token]);
 
   const handleSubmit = async () => {
-    const trimmedOtp = otpCode.trim();
+    if (isSubmitting || isLoading) return;
+
     const trimmedPassword = newPassword.trim();
     const trimmedConfirm = confirmPassword.trim();
+    const finalEmail = activeEmail || email;
+    const finalToken = activeToken || token;
 
-    if (!trimmedOtp) {
-      setErrorMessage('Please enter the 6-digit OTP code sent to your email.');
+    if (!finalEmail || !finalToken) {
+      setErrorMessage('Verification session expired. Please request a new OTP.');
       return;
     }
 
@@ -71,13 +101,24 @@ export const ResetPasswordScreen = ({
     }
 
     setErrorMessage('');
-    const result = await onSubmit?.(trimmedOtp, trimmedPassword, trimmedConfirm);
-    if (result?.success) {
-      setOtpCode('');
-      setNewPassword('');
-      setConfirmPassword('');
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit?.({
+        email: finalEmail,
+        otp: finalToken,
+        newPassword: trimmedPassword,
+        confirmPassword: trimmedConfirm,
+      });
+      await AsyncStorage.multiRemove([RESET_EMAIL_KEY, RESET_OTP_KEY]);
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to reset password.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const hasSession = Boolean(activeEmail || email);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -94,130 +135,140 @@ export const ResetPasswordScreen = ({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            {/* Header */}
             <View style={styles.headerBox}>
-          <View
-            style={[
-              styles.iconCircle,
-              { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder },
-            ]}
-          >
-            <Ionicons name="lock-open-outline" size={32} color={themeColors.primary} />
-          </View>
-          <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('resetPasswordTitle')}</Text>
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
-            {token ? 'Enter and confirm your new password below.' : (email ? `${t('resetPasswordSub')} (${email})` : t('resetPasswordSub'))}
-          </Text>
-        </View>
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder },
+                ]}
+              >
+                <Ionicons name="lock-closed-outline" size={32} color={themeColors.primary} />
+              </View>
+              <Text style={[styles.title, { color: themeColors.textPrimary }]}>
+                {t('resetPasswordTitle') || 'Create New Password'}
+              </Text>
+              <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+                {activeEmail || email
+                  ? `Set a new secure password for ${activeEmail || email}`
+                  : 'Set a new secure password for your account'}
+              </Text>
+            </View>
 
-        <View style={styles.form}>
-          {/* OTP Code Input (only shown if not already verified via Step 2) */}
-          {!token ? (
-            <>
+            {/* Form */}
+            <View style={styles.form}>
+              {/* New Password */}
               <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-                {t('otpLabel')}
+                {t('newPasswordLabel') || 'New Password'}
               </Text>
               <View
                 style={[
                   styles.inputWrapper,
-                  { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: errorMessage ? '#E11D48' : themeColors.border,
+                  },
                 ]}
               >
-                <Ionicons name="shield-checkmark-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+                <Ionicons name="key-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
                 <TextInput
-                  style={[styles.input, { color: themeColors.textPrimary, letterSpacing: 2 }, isRTL && styles.rtlInput]}
-                  placeholder={t('otpPlaceholder')}
+                  style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+                  placeholder={t('newPasswordPlaceholder') || 'Enter new password (min 6 chars)'}
                   placeholderTextColor={themeColors.textMuted}
-                  value={otpCode}
-                  onChangeText={(value) => {
-                    setOtpCode(value);
+                  value={newPassword}
+                  onChangeText={(val) => {
+                    setNewPassword(val);
                     if (errorMessage) setErrorMessage('');
                   }}
-                  keyboardType="number-pad"
-                  maxLength={12}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={themeColors.textMuted}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Confirm Password */}
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+                {t('confirmNewPasswordLabel') || 'Confirm Password'}
+              </Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: errorMessage ? '#E11D48' : themeColors.border,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={20}
+                  color={themeColors.textMuted}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+                  placeholder={t('confirmNewPasswordPlaceholder') || 'Confirm new password'}
+                  placeholderTextColor={themeColors.textMuted}
+                  value={confirmPassword}
+                  onChangeText={(val) => {
+                    setConfirmPassword(val);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
                 />
               </View>
-            </>
-          ) : null}
 
-          {/* New Password */}
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('newPasswordLabel')}
-          </Text>
-          <View
-            style={[
-              styles.inputWrapper,
-              { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
-            ]}
-          >
-            <Ionicons name="key-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder={t('newPasswordPlaceholder')}
-              placeholderTextColor={themeColors.textMuted}
-              value={newPassword}
-              onChangeText={(value) => {
-                setNewPassword(value);
-                if (errorMessage) setErrorMessage('');
-              }}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color={themeColors.textMuted}
-              />
+              {/* Error */}
+              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={[
+                  styles.submitBtn,
+                  { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary },
+                ]}
+                onPress={handleSubmit}
+                activeOpacity={0.85}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.submitBtnText}>
+                    {t('resetPasswordBtn') || 'Reset Password'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              {/* In case user refreshed and session got lost */}
+              {!hasSession && (
+                <TouchableOpacity
+                  style={styles.requestOtpLink}
+                  onPress={onNavigateForgot}
+                >
+                  <Text style={[styles.requestOtpLinkText, { color: themeColors.primary }]}>
+                    Session expired? Tap here to enter Email & OTP
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Back to Login */}
+            <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
+              <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
+              <Text style={[styles.backBtnText, { color: themeColors.primary }]}>
+                {t('backToLogin')}
+              </Text>
             </TouchableOpacity>
-          </View>
-
-          {/* Confirm Password */}
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('confirmNewPasswordLabel')}
-          </Text>
-          <View
-            style={[
-              styles.inputWrapper,
-              { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border },
-            ]}
-          >
-            <Ionicons name="keypad-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder={t('confirmNewPasswordPlaceholder')}
-              placeholderTextColor={themeColors.textMuted}
-              value={confirmPassword}
-              onChangeText={(value) => {
-                setConfirmPassword(value);
-                if (errorMessage) setErrorMessage('');
-              }}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
-          </View>
-
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-          <TouchableOpacity
-            style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
-            onPress={handleSubmit}
-            activeOpacity={0.85}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.submitBtnText}>{t('resetPasswordBtn')}</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
-          <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
-          <Text style={[styles.backBtnText, { color: themeColors.primary }]}>{t('backToLogin')}</Text>
-        </TouchableOpacity>
-      </ScrollView>
-      </TouchableWithoutFeedback>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -230,7 +281,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 32,
-    paddingBottom: 60,
+    paddingBottom: 40,
     flexGrow: 1,
     justifyContent: 'center',
   },
@@ -248,7 +299,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 8,
@@ -257,7 +308,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   form: {
     width: '100%',
@@ -269,8 +320,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 12,
   },
-  leftAlignedText: {
-    textAlign: 'left',
+  rtlText: {
+    textAlign: 'right',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -278,8 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     paddingHorizontal: 14,
-    height: 52,
-    marginBottom: 16,
+    height: 54,
   },
   inputIcon: {
     marginRight: 10,
@@ -289,25 +339,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  leftAlignedInput: {
-    textAlign: 'left',
+  rtlInput: {
+    textAlign: 'right',
   },
   eyeIcon: {
     padding: 6,
   },
   errorText: {
     color: '#E11D48',
-    fontSize: 12,
-    marginTop: 8,
-    marginBottom: 12,
+    fontSize: 13,
     fontWeight: '600',
+    marginTop: 10,
   },
   submitBtn: {
     alignItems: 'center',
     justifyContent: 'center',
     height: 52,
     borderRadius: 26,
-    marginTop: 12,
+    marginTop: 24,
     shadowColor: '#1A4FD6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -316,14 +365,24 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
+  },
+  requestOtpLink: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  requestOtpLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingVertical: 10,
   },
   backBtnText: {
     fontSize: 15,

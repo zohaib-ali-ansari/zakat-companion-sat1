@@ -1,8 +1,8 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,24 +10,29 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
 
 export const ForgotPasswordScreen = ({
-  onNavigateLogin,
-  onNavigateReset,
+  initialEmail = '',
   onSendResetRequest,
+  onVerifyOtp,
+  onNavigateLogin,
   isLoading = false,
   submitError = '',
 }) => {
   const { t, themeColors, isRTL } = useLanguage();
-  const [email, setEmail] = useState('');
-  const [isSent, setIsSent] = useState(false);
+  const [email, setEmail] = useState(initialEmail || '');
+  const [otp, setOtp] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [errorMessage, setErrorMessage] = useState(submitError || '');
+  const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
     if (submitError) {
@@ -35,7 +40,17 @@ export const ForgotPasswordScreen = ({
     }
   }, [submitError]);
 
-  const handleSend = async () => {
+  useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  const handleSendOtp = async () => {
     const trimmedEmail = email.trim();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,10 +65,54 @@ export const ForgotPasswordScreen = ({
     }
 
     setErrorMessage('');
-    const result = await onSendResetRequest?.(trimmedEmail);
-    if (result?.success) {
-      setIsSent(true);
-      onNavigateReset?.(trimmedEmail);
+    setIsSendingOtp(true);
+
+    try {
+      const result = await onSendResetRequest?.(trimmedEmail);
+      if (result?.success !== false) {
+        setIsOtpSent(true);
+        setCountdown(60);
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to send OTP code.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    const trimmedEmail = email.trim();
+    const trimmedOtp = otp.trim();
+
+    if (!trimmedEmail) {
+      setErrorMessage('Please enter your email address first.');
+      return;
+    }
+
+    if (!isOtpSent) {
+      setErrorMessage('Please tap "Send OTP" to receive your code first.');
+      return;
+    }
+
+    if (!trimmedOtp) {
+      setErrorMessage('Please enter the 6-digit OTP code.');
+      return;
+    }
+
+    if (trimmedOtp.length !== 6 || !/^\d+$/.test(trimmedOtp)) {
+      setErrorMessage('OTP code must be exactly 6 digits.');
+      return;
+    }
+
+    setErrorMessage('');
+    setIsVerifyingOtp(true);
+
+    try {
+      await onVerifyOtp?.(trimmedEmail, trimmedOtp);
+    } catch (err) {
+      setErrorMessage(err.message || 'Invalid or expired OTP.');
+    } finally {
+      setIsVerifyingOtp(false);
     }
   };
 
@@ -69,81 +128,163 @@ export const ForgotPasswordScreen = ({
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
+            {/* Header */}
             <View style={styles.headerBox}>
-              <View style={[styles.iconCircle, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
-                <Ionicons name="keypad-outline" size={32} color={themeColors.primary} />
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder },
+                ]}
+              >
+                <Ionicons name="key-outline" size={32} color={themeColors.primary} />
               </View>
-              <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('forgotTitle')}</Text>
-              <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>{t('forgotSub')}</Text>
+              <Text style={[styles.title, { color: themeColors.textPrimary }]}>
+                {t('forgotTitle') || 'Forgot Password'}
+              </Text>
+              <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+                Enter your email, receive a 6-digit OTP code, and verify to set a new password.
+              </Text>
             </View>
 
-            {isSent ? (
-              <View style={styles.form}>
-                <View style={[styles.successCard, { backgroundColor: themeColors.successBg, borderColor: themeColors.success }]}>
-                  <Ionicons name="checkmark-circle" size={28} color={themeColors.success} />
-                  <Text style={[styles.successText, { color: themeColors.textPrimary }]}>
-                    {t('resetSentSuccess')}
-                  </Text>
-                </View>
+            {/* Form */}
+            <View style={styles.form}>
+              {/* Email Label */}
+              <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+                {t('emailLabel')}
+              </Text>
 
+              {/* Email Input + Send Button */}
+              <View
+                style={[
+                  styles.emailRowWrapper,
+                  { backgroundColor: themeColors.cardBg, borderColor: themeColors.border },
+                ]}
+              >
+                <Ionicons name="mail-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
+                  placeholder={t('emailPlaceholder')}
+                  placeholderTextColor={themeColors.textMuted}
+                  value={email}
+                  onChangeText={(val) => {
+                    setEmail(val);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!isSendingOtp && !isVerifyingOtp && !isLoading}
+                />
                 <TouchableOpacity
-                  style={[styles.submitBtn, { backgroundColor: themeColors.primary, marginBottom: 16 }]}
-                  onPress={() => onNavigateReset?.(email.trim())}
-                  activeOpacity={0.85}
+                  style={[
+                    styles.sendOtpBtn,
+                    {
+                      backgroundColor:
+                        countdown > 0 || isSendingOtp ? '#E2E8F0' : themeColors.primary,
+                    },
+                  ]}
+                  onPress={handleSendOtp}
+                  disabled={countdown > 0 || isSendingOtp || isLoading}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.submitBtnText}>{t('enterOtpBtn')}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.form}>
-                <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-                  {t('emailLabel')}
-                </Text>
-                <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: errorMessage ? '#E11D48' : themeColors.border }]}>
-                  <Ionicons name="mail-outline" size={20} color={themeColors.textMuted} style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-                    placeholder={t('emailPlaceholder')}
-                    placeholderTextColor={themeColors.textMuted}
-                    value={email}
-                    onChangeText={(value) => {
-                      setEmail(value);
-                      if (errorMessage) setErrorMessage('');
-                    }}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-                <TouchableOpacity
-                  style={[styles.submitBtn, { backgroundColor: isLoading ? '#A0AEC0' : themeColors.primary }]}
-                  onPress={handleSend}
-                  activeOpacity={0.85}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                  {isSendingOtp ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.submitBtnText}>{t('sendResetLinkBtn')}</Text>
+                    <Text
+                      style={[
+                        styles.sendOtpBtnText,
+                        { color: countdown > 0 ? '#64748B' : '#FFFFFF' },
+                      ]}
+                    >
+                      {countdown > 0 ? `${countdown}s` : isOtpSent ? 'Resend' : 'Send OTP'}
+                    </Text>
                   )}
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.alreadyHaveOtpBtn}
-                  onPress={() => onNavigateReset?.(email.trim())}
-                >
-                  <Text style={[styles.alreadyHaveOtpText, { color: themeColors.primary }]}>
-                    {t('enterOtpBtn')}
-                  </Text>
-                </TouchableOpacity>
               </View>
-            )}
 
+              {isOtpSent && (
+                <View style={styles.sentInfoBox}>
+                  <Ionicons name="checkmark-circle" size={16} color={themeColors.success || '#10B981'} />
+                  <Text style={[styles.sentInfoText, { color: themeColors.success || '#10B981' }]}>
+                    OTP code has been sent to your email!
+                  </Text>
+                </View>
+              )}
+
+              {/* OTP Field (shown always or ready once sent) */}
+              <Text
+                style={[
+                  styles.inputLabel,
+                  { color: themeColors.textPrimary, marginTop: 16 },
+                  isRTL && styles.rtlText,
+                ]}
+              >
+                {t('otpLabel') || '6-Digit OTP Code'}
+              </Text>
+
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: errorMessage ? '#E11D48' : themeColors.border,
+                    opacity: isOtpSent ? 1 : 0.75,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={20}
+                  color={themeColors.textMuted}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.otpInput,
+                    { color: themeColors.textPrimary },
+                    isRTL && styles.rtlInput,
+                  ]}
+                  placeholder="e.g. 123456"
+                  placeholderTextColor={themeColors.textMuted}
+                  value={otp}
+                  onChangeText={(val) => {
+                    const cleaned = val.replace(/\D/g, '').slice(0, 6);
+                    setOtp(cleaned);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                />
+              </View>
+
+              {/* Error Message */}
+              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+              {/* Verify & Proceed Button */}
+              <TouchableOpacity
+                style={[
+                  styles.submitBtn,
+                  {
+                    backgroundColor:
+                      isVerifyingOtp || isLoading ? '#A0AEC0' : themeColors.primary,
+                  },
+                ]}
+                onPress={handleVerify}
+                disabled={isVerifyingOtp || isLoading}
+                activeOpacity={0.85}
+              >
+                {isVerifyingOtp || isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Verify OTP & Continue</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Back to Login */}
             <TouchableOpacity style={styles.backBtn} onPress={onNavigateLogin}>
               <Ionicons name="arrow-back" size={18} color={themeColors.primary} />
               <Text style={[styles.backBtnText, { color: themeColors.primary }]}>
@@ -164,13 +305,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 32,
-    paddingBottom: 60,
+    paddingBottom: 40,
     flexGrow: 1,
     justifyContent: 'center',
   },
   headerBox: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
   iconCircle: {
     width: 68,
@@ -182,7 +323,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 8,
@@ -191,7 +332,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   form: {
     width: '100%',
@@ -205,14 +346,22 @@ const styles = StyleSheet.create({
   rtlText: {
     textAlign: 'right',
   },
+  emailRowWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    paddingLeft: 14,
+    paddingRight: 6,
+    height: 54,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
     borderWidth: 1.5,
     paddingHorizontal: 14,
-    height: 52,
-    marginBottom: 20,
+    height: 54,
   },
   inputIcon: {
     marginRight: 10,
@@ -222,14 +371,49 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
+  otpInput: {
+    letterSpacing: 4,
+    fontWeight: '700',
+    fontSize: 18,
+  },
   rtlInput: {
     textAlign: 'right',
+  },
+  sendOtpBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 84,
+  },
+  sendOtpBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sentInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  sentInfoText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  errorText: {
+    color: '#E11D48',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 10,
   },
   submitBtn: {
     alignItems: 'center',
     justifyContent: 'center',
     height: 52,
     borderRadius: 26,
+    marginTop: 24,
     shadowColor: '#1A4FD6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -238,48 +422,18 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-  },
-  errorText: {
-    color: '#E11D48',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  successCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 12,
-    marginBottom: 24,
-  },
-  successText: {
-    fontSize: 14,
-    fontWeight: '600',
-    flex: 1,
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingVertical: 10,
   },
   backBtnText: {
     fontSize: 15,
     fontWeight: '700',
-  },
-  alreadyHaveOtpBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 14,
-    paddingVertical: 8,
-  },
-  alreadyHaveOtpText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
   },
 });

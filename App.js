@@ -296,15 +296,13 @@ function MainAppContent() {
 
     if (!trimmedEmail) {
       setAuthError('Please enter your email address.');
-      showAlert('Missing Email', 'Please enter your email address.', 'warning');
-      return;
+      throw new Error('Please enter your email address.');
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(trimmedEmail)) {
       setAuthError('Please enter a valid email address.');
-      showAlert('Invalid Email', 'Please enter a valid email address.', 'warning');
-      return;
+      throw new Error('Please enter a valid email address.');
     }
 
     setAuthError('');
@@ -315,30 +313,22 @@ function MainAppContent() {
       if (result?.success) {
         setResetEmail(trimmedEmail);
         setPendingEmail(trimmedEmail);
-        setAuthFlow('forgotOtp');
-        showAlert(
-          'OTP Code Sent',
-          `A 6-digit password reset OTP code has been sent to ${trimmedEmail}.`,
-          'success'
-        );
       }
       return result;
     } catch (error) {
-      const message = error?.message || 'Unable to send reset instructions.';
+      const message = error?.message || 'Unable to send reset code.';
       setAuthError(message);
-      showAlert('Reset Request Failed', message, 'error');
-      return null;
+      throw new Error(message);
     } finally {
       setIsAuthenticating(false);
     }
   };
 
-  const handleVerifyResetOtp = async (otpValue) => {
-    const targetEmail = resetEmail || pendingEmail;
-    if (!targetEmail) {
-      setAuthError('Email missing for verification.');
-      showAlert('Missing Email', 'Email address is missing for verification.', 'warning');
-      return;
+  const handleVerifyResetOtp = async (emailValue, otpValue) => {
+    const targetEmail = emailValue || resetEmail || pendingEmail;
+    if (!targetEmail || !otpValue) {
+      setAuthError('Email and OTP code are required.');
+      throw new Error('Email and OTP code are required.');
     }
 
     setAuthError('');
@@ -347,31 +337,39 @@ function MainAppContent() {
     try {
       const result = await verifyResetOtpApi(targetEmail, otpValue);
       if (result?.success) {
+        setResetEmail(targetEmail);
         setResetToken(otpValue);
         setAuthFlow('reset');
-        showAlert(
-          'OTP Verified',
-          'Your OTP code has been verified. Please enter your new password.',
-          'success'
-        );
       }
+      return result;
     } catch (error) {
       const message = error?.message || 'Invalid or expired OTP code.';
       setAuthError(message);
-      showAlert('Verification Failed', message, 'error');
+      throw new Error(message);
     } finally {
       setIsAuthenticating(false);
     }
   };
 
-  const handleResetPassword = async (otpCode, newPasswordValue, confirmPasswordValue) => {
-    const targetEmail = resetEmail || pendingEmail;
-    const finalOtp = resetToken || otpCode;
+  const handleResetPassword = async (payload, newPasswordValue, confirmPasswordValue) => {
+    let targetEmail = resetEmail || pendingEmail;
+    let finalOtp = resetToken;
+    let finalNewPass = newPasswordValue;
+    let finalConfirmPass = confirmPasswordValue;
+
+    if (payload && typeof payload === 'object') {
+      targetEmail = payload.email || targetEmail;
+      finalOtp = payload.otp || payload.token || finalOtp;
+      finalNewPass = payload.newPassword || finalNewPass;
+      finalConfirmPass = payload.confirmPassword || finalConfirmPass;
+    } else if (typeof payload === 'string') {
+      finalOtp = payload || finalOtp;
+    }
 
     if (!targetEmail || !finalOtp) {
-      const message = 'Please enter your email and the 6-digit OTP code.';
+      const message = 'Missing verification session. Please request OTP again.';
       setAuthError(message);
-      showAlert('Missing OTP', message, 'warning');
+      showAlert('Session Expired', message, 'warning');
       return { success: false };
     }
 
@@ -382,20 +380,19 @@ function MainAppContent() {
       const result = await resetPassword({
         email: targetEmail,
         otp: finalOtp,
-        newPassword: newPasswordValue,
-        confirmPassword: confirmPasswordValue,
+        newPassword: finalNewPass,
+        confirmPassword: finalConfirmPass,
       });
 
       if (result?.success) {
         setResetToken('');
         setResetEmail('');
         setPendingEmail('');
+        setAuthFlow('login');
         showAlert(
-          'Password Reset',
-          'Your password has been updated successfully. Please sign in with your new password.',
-          'success',
-          'Sign In',
-          () => setAuthFlow('login')
+          'Password Reset Successful',
+          'Your password has been updated. Please sign in with your new password.',
+          'success'
         );
         return { success: true };
       }
@@ -411,99 +408,98 @@ function MainAppContent() {
     }
   };
 
-  if (authFlow === 'splash') {
-    return <SplashScreen onGetStarted={() => setAuthFlow('language')} />;
-  }
+  const renderAuthScreens = () => {
+    if (authFlow === 'splash') {
+      return <SplashScreen onGetStarted={() => setAuthFlow('language')} />;
+    }
 
-  if (authFlow === 'language') {
-    return <LanguageSelectionScreen onContinue={() => setAuthFlow('login')} />;
-  }
+    if (authFlow === 'language') {
+      return <LanguageSelectionScreen onContinue={() => setAuthFlow('login')} />;
+    }
 
-  if (authFlow === 'login') {
+    if (authFlow === 'login') {
+      return (
+        <LoginScreen
+          onLoginSuccess={handleLogin}
+          onNavigateSignUp={() => setAuthFlow('signup')}
+          onNavigateForgot={() => setAuthFlow('forgot')}
+          isLoading={isAuthenticating}
+          submitError={authError}
+        />
+      );
+    }
+
+    if (authFlow === 'signup') {
+      return (
+        <SignUpScreen
+          onSignUpSuccess={handleSignUp}
+          onNavigateLogin={() => setAuthFlow('login')}
+          isLoading={isAuthenticating}
+          submitError={authError}
+        />
+      );
+    }
+
+    if (authFlow === 'otp') {
+      return (
+        <OtpVerificationScreen
+          email={pendingEmail}
+          onVerifyOtp={handleVerifyRegistrationOtp}
+          onResendOtp={() => handleResendOtp('register')}
+          onNavigateLogin={() => setAuthFlow('login')}
+          isLoading={isAuthenticating}
+          submitError={authError}
+        />
+      );
+    }
+
+    if (authFlow === 'forgot') {
+      return (
+        <ForgotPasswordScreen
+          initialEmail={resetEmail || pendingEmail}
+          onSendResetRequest={handleForgotPassword}
+          onVerifyOtp={handleVerifyResetOtp}
+          onNavigateLogin={() => {
+            setAuthError('');
+            setAuthFlow('login');
+          }}
+          isLoading={isAuthenticating}
+          submitError={authError}
+        />
+      );
+    }
+
+    if (authFlow === 'reset') {
+      return (
+        <ResetPasswordScreen
+          email={resetEmail || pendingEmail}
+          token={resetToken}
+          onSubmit={handleResetPassword}
+          onNavigateForgot={() => {
+            setAuthError('');
+            setAuthFlow('forgot');
+          }}
+          onNavigateLogin={() => {
+            setResetToken('');
+            setResetEmail('');
+            setPendingEmail('');
+            setAuthFlow('login');
+          }}
+          isLoading={isAuthenticating}
+          submitError={authError}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  if (authFlow !== 'app') {
     return (
-      <LoginScreen
-        onLoginSuccess={handleLogin}
-        onNavigateSignUp={() => setAuthFlow('signup')}
-        onNavigateForgot={() => setAuthFlow('forgot')}
-        isLoading={isAuthenticating}
-        submitError={authError}
-      />
-    );
-  }
-
-  if (authFlow === 'signup') {
-    return (
-      <SignUpScreen
-        onSignUpSuccess={handleSignUp}
-        onNavigateLogin={() => setAuthFlow('login')}
-        isLoading={isAuthenticating}
-        submitError={authError}
-      />
-    );
-  }
-
-  if (authFlow === 'otp') {
-    return (
-      <OtpVerificationScreen
-        email={pendingEmail}
-        onVerifyOtp={handleVerifyRegistrationOtp}
-        onResendOtp={() => handleResendOtp('register')}
-        onNavigateLogin={() => setAuthFlow('login')}
-        isLoading={isAuthenticating}
-        submitError={authError}
-      />
-    );
-  }
-
-  if (authFlow === 'forgot') {
-    return (
-      <ForgotPasswordScreen
-        onNavigateLogin={() => setAuthFlow('login')}
-        onNavigateReset={(em) => {
-          if (em) {
-            setResetEmail(em);
-            setPendingEmail(em);
-          }
-          setAuthFlow('forgotOtp');
-        }}
-        onSendResetRequest={handleForgotPassword}
-        isLoading={isAuthenticating}
-        submitError={authError}
-      />
-    );
-  }
-
-  if (authFlow === 'forgotOtp') {
-    return (
-      <OtpVerificationScreen
-        email={resetEmail || pendingEmail}
-        title="Verify Reset OTP"
-        subtitle="Enter the 6-digit code sent to reset your password for"
-        buttonText="Verify & Set New Password"
-        onVerifyOtp={handleVerifyResetOtp}
-        onResendOtp={() => handleResendOtp('reset')}
-        onNavigateLogin={() => setAuthFlow('login')}
-        isLoading={isAuthenticating}
-        submitError={authError}
-      />
-    );
-  }
-
-  if (authFlow === 'reset') {
-    return (
-      <ResetPasswordScreen
-        email={resetEmail || pendingEmail}
-        token={resetToken}
-        onSubmit={handleResetPassword}
-        onNavigateLogin={() => {
-          setResetToken('');
-          setResetEmail('');
-          setPendingEmail('');
-          setAuthFlow('login');
-        }}
-        isLoading={isAuthenticating}
-        submitError={authError}
-      />
+      <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+        {renderAuthScreens()}
+        <CustomAlertModal {...customAlert} />
+      </View>
     );
   }
 
