@@ -25,7 +25,7 @@ export const QuickActionGrid = ({ onSelectAction }) => {
           <View style={[styles.iconCircle, { backgroundColor: themeColors.primaryLight }]}>
             <Ionicons name={action.icon} size={22} color={themeColors.primary} />
           </View>
-          <Text style={[styles.cardLabel, { color: themeColors.textPrimary }]} numberOfLines={1}>
+          <Text style={[styles.cardLabel, { color: themeColors.textPrimary }]}>
             {t(action.labelKey)}
           </Text>
         </TouchableOpacity>
@@ -38,17 +38,19 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: 15,
     marginBottom: 20,
   },
   cardItem: {
     flex: 1,
+    minHeight: 114,
     borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     alignItems: 'center',
-    marginHorizontal: 5,
+    justifyContent: 'flex-start',
+    marginHorizontal: 4,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -57,16 +59,18 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   iconCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   cardLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     textAlign: 'center',
+    lineHeight: 16,
+    flexWrap: 'wrap',
   },
 });

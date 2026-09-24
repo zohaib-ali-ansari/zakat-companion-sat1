@@ -34,6 +34,8 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
     updateTrackingTotal,
     completeAndArchiveCycle,
     isCompleted,
+    isSyncing,
+    refreshData,
   } = useZakat();
 
   // Edit Total Modal State
@@ -199,7 +201,14 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
               {t('recentPaymentsTitle')}
             </Text>
 
-            {records && records.length > 0 ? (
+            {isSyncing ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="sync-outline" size={28} color={themeColors.primary} />
+                <Text style={[styles.emptyText, { color: themeColors.textSecondary }]}>
+                  Loading tracking data...
+                </Text>
+              </View>
+            ) : records && records.length > 0 ? (
               records.map((item) => (
                 <View
                   key={item.id || item._id}
@@ -242,9 +251,20 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
                 </View>
               ))
             ) : (
-              <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
-                {t('noPaymentsYet')}
-              </Text>
+              <View style={styles.emptyContainer}>
+                <Ionicons name="receipt-outline" size={32} color={themeColors.textMuted} />
+                <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
+                  {t('noPaymentsYet') || 'No Zakat payments recorded yet'}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.retryBtn, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}
+                  onPress={() => refreshData?.()}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="refresh-outline" size={14} color={themeColors.primary} />
+                  <Text style={[styles.retryBtnText, { color: themeColors.primary }]}>Refresh Data</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </ScrollView>
@@ -407,7 +427,10 @@ const styles = StyleSheet.create({
   recipientText: { fontSize: 14, fontWeight: '700' },
   dateText: { fontSize: 12, marginTop: 2 },
   amountText: { fontSize: 15, fontWeight: '800' },
-  emptyText: { fontSize: 14, textAlign: 'center', marginTop: 10 },
+  emptyText: { fontSize: 14, textAlign: 'center', marginTop: 6 },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 24, gap: 8 },
+  retryBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, marginTop: 8 },
+  retryBtnText: { fontSize: 13, fontWeight: '700' },
   cardRight: { alignItems: 'flex-end', justifyContent: 'center', gap: 6, minWidth: 90 },
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   actionBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },

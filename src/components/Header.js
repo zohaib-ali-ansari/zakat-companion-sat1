@@ -20,8 +20,8 @@ export const Header = ({ onOpenSettings }) => {
         styles.headerContainer,
         {
           backgroundColor: themeColors.background,
-          paddingTop: topPadding + 4,
-          paddingBottom: 12,
+          paddingTop: 10,
+          paddingBottom: 10,
         },
         isRTL && styles.rtlContainer,
       ]}

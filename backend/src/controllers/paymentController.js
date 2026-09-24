@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const ZakatPayment = require('../models/ZakatPayment');
 const ZakatCycle = require('../models/ZakatCycle');
 
@@ -204,6 +205,13 @@ const updatePayment = async (req, res) => {
     const { id } = req.params;
     const { amount, recipient, date, notes, category, status } = req.body;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment record not found',
+      });
+    }
+
     const payment = await ZakatPayment.findOne({ _id: id, userId });
     if (!payment) {
       return res.status(404).json({
@@ -267,6 +275,13 @@ const deletePayment = async (req, res) => {
   try {
     const userId = req.user._id;
     const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment record not found',
+      });
+    }
 
     const payment = await ZakatPayment.findOneAndDelete({ _id: id, userId });
     if (!payment) {

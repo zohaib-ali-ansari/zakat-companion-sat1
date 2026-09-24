@@ -45,7 +45,7 @@ export default function AddPaymentScreen({ onBack, editingPayment }) {
     }
   }, [editingPayment]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setErrorMessage('');
     const parsedAmount = parseFloat(amount);
     if (!parsedAmount || parsedAmount <= 0 || !recipient.trim()) {
@@ -55,14 +55,14 @@ export default function AddPaymentScreen({ onBack, editingPayment }) {
 
     let success = false;
     if (isEditing) {
-      success = editPayment(editingPayment.id, {
+      success = await editPayment(editingPayment.id, {
         date,
         amount: parsedAmount,
         recipient,
         notes,
       });
     } else {
-      success = addPayment({
+      success = await addPayment({
         date,
         amount: parsedAmount,
         recipient,

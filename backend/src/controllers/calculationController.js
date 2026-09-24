@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const ZakatCalculation = require('../models/ZakatCalculation');
 const ZakatCycle = require('../models/ZakatCycle');
 const MetalRate = require('../models/MetalRate');
@@ -218,6 +219,13 @@ const deleteCalculation = async (req, res) => {
   try {
     const userId = req.user._id;
     const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Calculation not found',
+      });
+    }
 
     const calculation = await ZakatCalculation.findOneAndDelete({ _id: id, userId });
 

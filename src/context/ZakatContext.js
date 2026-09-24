@@ -198,10 +198,16 @@ export const ZakatProvider = ({ children, token, user }) => {
     source: 'Sarafa Market / State Bank of Pakistan',
   });
 
-  // Sync token prop changes
+  // Sync token prop changes & clear state on logout
   useEffect(() => {
-    if (token) setAuthToken(token);
-    if (user) setCurrentUser(user);
+    if (token !== undefined) setAuthToken(token);
+    if (user !== undefined) setCurrentUser(user);
+    if (!token && !authToken) {
+      // Clear data when no token is present
+      setRecords([]);
+      setTotalDue(0);
+      setCompletedCycles([]);
+    }
   }, [token, user]);
 
   // Load live data from backend
@@ -237,7 +243,7 @@ export const ZakatProvider = ({ children, token, user }) => {
           if (summary.totalDue !== undefined) setTotalDue(summary.totalDue);
           if (summary.hijriYear) setHijriYear(summary.hijriYear);
           if (summary.nisabDate) setNisabDate(summary.nisabDate);
-          if (Array.isArray(summary.records) && summary.records.length > 0) {
+          if (Array.isArray(summary.records)) {
             setRecords(
               summary.records.map((r) => ({
                 ...r,
