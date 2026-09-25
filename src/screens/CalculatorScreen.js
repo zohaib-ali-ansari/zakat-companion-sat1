@@ -34,19 +34,12 @@ const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 const GOLD_KARATS = [24, 22, 21, 18];
 const UNITS = ['tola', 'gram', 'masha'];
-const SILVER_PURITIES = ['pure', 'sterling'];
 
 const GOLD_PURITY_FACTORS = {
   24: 1,
   22: 22 / 24,
   21: 21 / 24,
   18: 18 / 24,
-};
-
-// Silver rate entered by the user is for PURE silver; sterling is valued at 92.5% of it.
-const SILVER_PURITY_FACTORS = {
-  pure: 1,
-  sterling: 0.925,
 };
 
 const getPublicApiKey = () => {
@@ -191,7 +184,7 @@ const getDefaultGoldItem = () => ({
 const getDefaultSilverItem = () => ({
   id: `${Date.now()}-silver`,
   unit: 'tola',
-  weight: '',
+  weight: '1',
   priceMode: 'manual',
   manualRate: '',
   purity: 'pure',
@@ -542,18 +535,17 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
 
   const silverCalculations = useMemo(() => {
     return silverItems.map((item) => {
-      const tola = getWeightInTola(item.weight, item.unit);
+      const activeWeight = normalizePositive(item.weight) || 1;
+      const tola = getWeightInTola(activeWeight, item.unit || 'tola');
       const rate = getCurrentSilverRate(item);
 
       if (!tola) {
         return { id: item.id, value: 0, blocked: false, rate, tola };
       }
 
-      const purityFactor = SILVER_PURITY_FACTORS[item.purity] || 1;
-
       return {
         id: item.id,
-        value: rate ? tola * rate * purityFactor : 0,
+        value: rate ? tola * rate : 0,
         blocked: !rate,
         rate,
         tola,
@@ -1053,29 +1045,9 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           () => removeSilverItem(item.id)
         )}
 
-        {renderLabel(ui('Unit', 'اکائی'))}
-        {renderUnitChips(item.unit, (unit) => updateSilverItem(item.id, { unit }))}
-
-        {renderLabel(ui('Purity', 'خالص پن'))}
-        <View style={[styles.optionRow, isRTL && styles.rtlRow]}>
-          {SILVER_PURITIES.map((purity) =>
-            renderChip(
-              purity,
-              item.purity === purity,
-              purity === 'pure'
-                ? ui('Pure', 'خالص')
-                : ui('Sterling 92.5%', 'اسٹرلنگ 92.5%'),
-              () => updateSilverItem(item.id, { purity })
-            )
-          )}
-        </View>
-
-        {renderLabel(ui('Weight', 'وزن'))}
-        {renderInput(item.weight, (weight) => updateSilverItem(item.id, { weight }))}
-
         <View style={styles.manualRateBox}>
           {renderLabel(
-            ui('Your pure silver rate per tola', 'آپ کا خالص چاندی کا ریٹ فی تولہ')
+            ui('Your silver rate per tola', 'آپ کا چاندی کا ریٹ فی تولہ')
           )}
           {renderInput(item.manualRate, (manualRate) =>
             updateSilverItem(item.id, { manualRate })
