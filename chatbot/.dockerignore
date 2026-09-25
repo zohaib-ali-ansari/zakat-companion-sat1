@@ -1,0 +1,15 @@
+# Secrets and repository metadata stay outside the image.
+.env
+.git
+__pycache__/
+*.pyc
+
+# Runtime retrieval uses the external Qdrant collection. Run ingestion
+# separately from the source documents before deploying the API image.
+knowledge/
+
+# Obsolete local Chroma data is not part of the Qdrant deployment.
+chroma_db/
+eval/results/
+tests/
+.pytest_cache/

@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+slowapi
+python-dotenv
+pydantic
+
+langchain-core
+langchain-text-splitters
+langchain-community
+langchain-google-genai
+langchain-qdrant
+
+qdrant-client
+pypdf

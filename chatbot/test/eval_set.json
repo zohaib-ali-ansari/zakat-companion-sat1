@@ -1,0 +1,44 @@
+[
+  {
+    "id": "q1",
+    "question": "What is Zakat?",
+    "expected_keywords": ["obligatory", "wealth"],
+    "should_have_answer": true
+  },
+  {
+    "id": "q2",
+    "question": "What is Nisab?",
+    "expected_keywords": ["nisab", "threshold"],
+    "should_have_answer": true
+  },
+  {
+    "id": "q3",
+    "question": "What percentage of wealth is given as Zakat?",
+    "expected_keywords": ["2.5"],
+    "should_have_answer": true
+  },
+  {
+    "id": "q4",
+    "question": "Who is obligated to pay Zakat?",
+    "expected_keywords": [],
+    "should_have_answer": true
+  },
+  {
+    "id": "q5",
+    "question": "Is Zakat due on gold and silver?",
+    "expected_keywords": ["gold"],
+    "should_have_answer": true
+  },
+  {
+    "id": "q6",
+    "question": "What is the capital of France?",
+    "expected_keywords": ["do not have enough information", "not have enough", "don't have enough"],
+    "should_have_answer": true
+  },
+  {
+    "id": "q7",
+    "question": "What is the airspeed velocity of an unladen swallow?",
+    "expected_keywords": ["do not have enough information", "not have enough", "don't have enough"],
+    "should_have_answer": true
+  }
+]
