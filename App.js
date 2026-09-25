@@ -675,7 +675,7 @@ function MainAppContent() {
       <ReportExportModal
         visible={reportModalVisible}
         onClose={() => setReportModalVisible(false)}
-        year="2024"
+        year={new Date().getFullYear().toString()}
       />
       <CustomAlertModal {...customAlert} />
     </View>

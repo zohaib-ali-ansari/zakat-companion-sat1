@@ -191,6 +191,7 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
         visible={reportModalVisible}
         onClose={() => setReportModalVisible(false)}
         year={year}
+        cycle={cycle}
       />
     </SafeAreaView>
   );
