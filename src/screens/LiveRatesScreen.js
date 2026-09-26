@@ -373,11 +373,6 @@ export default function LiveRatesScreen({
         {
           backgroundColor:
             themeColors.background,
-          paddingTop:
-            Math.max(
-              insets.top - 10,
-              0
-            ),
         },
       ]}
     >

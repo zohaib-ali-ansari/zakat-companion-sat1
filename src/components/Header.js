@@ -1,18 +1,15 @@
-import { StatusBar, StyleSheet, Image, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from 'react';
+import { StyleSheet, Image, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export const Header = ({ onOpenSettings }) => {
-  const { t, isRTL, language, isDarkMode, toggleDarkMode, themeColors } = useLanguage();
+  const { isRTL, isDarkMode, toggleDarkMode, themeColors } = useLanguage();
   const { currentUser } = useZakat();
-  const insets = useSafeAreaInsets();
 
   const avatars = ['wallet', 'person', 'star', 'sparkles'];
   const avatarIcon = avatars[currentUser?.avatar ?? 1] || 'person';
-
-  const topPadding = Math.max(insets.top || 0, StatusBar.currentHeight || 0, 20);
 
   return (
     <View
@@ -20,8 +17,6 @@ export const Header = ({ onOpenSettings }) => {
         styles.headerContainer,
         {
           backgroundColor: themeColors.background,
-          paddingTop: 10,
-          paddingBottom: 10,
         },
         isRTL && styles.rtlContainer,
       ]}
@@ -34,7 +29,7 @@ export const Header = ({ onOpenSettings }) => {
         accessibilityRole="button"
         accessibilityLabel="Profile settings"
       >
-        <Ionicons name={avatarIcon} size={20} color={themeColors.primary} />
+        <Ionicons name={avatarIcon} size={22} color={themeColors.primary} />
       </TouchableOpacity>
 
       {/* App Logo */}
@@ -46,7 +41,7 @@ export const Header = ({ onOpenSettings }) => {
         />
       </View>
 
-      {/* Dark / Light Theme Toggle Button on right (replacing menu icon) */}
+      {/* Dark / Light Theme Toggle Button on right */}
       <TouchableOpacity
         style={[styles.iconButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
         onPress={toggleDarkMode}
@@ -70,15 +65,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 2,
+    height: 72,
   },
   rtlContainer: {
     flexDirection: 'row-reverse',
   },
   avatarBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -87,15 +82,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 165,
+    height: 72,
+    marginHorizontal: 8,
   },
   headerLogo: {
     width: '100%',
-    height: 165,
+    height: 70,
   },
   iconButton: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 42,
     borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
