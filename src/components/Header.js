@@ -1,4 +1,4 @@
-import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StatusBar, StyleSheet, Image, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
@@ -37,8 +37,14 @@ export const Header = ({ onOpenSettings }) => {
         <Ionicons name={avatarIcon} size={20} color={themeColors.primary} />
       </TouchableOpacity>
 
-      {/* App Title */}
-      <Text style={[styles.title, { color: themeColors.textPrimary }]}>{t('appTitle')}</Text>
+      {/* App Logo */}
+      <View style={styles.titleWrapper}>
+        <Image
+          source={require('../../assets/logo.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+      </View>
 
       {/* Dark / Light Theme Toggle Button on right (replacing menu icon) */}
       <TouchableOpacity
@@ -63,29 +69,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 2,
   },
   rtlContainer: {
     flexDirection: 'row-reverse',
   },
   avatarBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+  titleWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 165,
+  },
+  headerLogo: {
+    width: '100%',
+    height: 165,
   },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

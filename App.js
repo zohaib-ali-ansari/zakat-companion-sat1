@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View, BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { BottomNavigation } from './src/components/BottomNavigation';
@@ -95,6 +95,7 @@ function MainAppContent() {
         if (storedToken) {
           setAuthToken(storedToken);
           if (storedUser) setCurrentUser(storedUser);
+          setActiveTab('home');
           setAuthFlow('app');
         }
       } catch (err) {
@@ -139,6 +140,103 @@ function MainAppContent() {
     };
   }, []);
 
+  // Handle Android & Mobile Hardware Back Button Navigation
+  useEffect(() => {
+    const onBackPress = () => {
+      // 1. If alert modal is open, dismiss it
+      if (customAlert.visible) {
+        setCustomAlert((prev) => ({ ...prev, visible: false }));
+        return true;
+      }
+
+      // 2. If export report modal is open, dismiss it
+      if (reportModalVisible) {
+        setReportModalVisible(false);
+        return true;
+      }
+
+      // 3. Auth Flow Navigation
+      if (authFlow !== 'app') {
+        if (authFlow === 'signup' || authFlow === 'forgot' || authFlow === 'otp') {
+          setAuthError('');
+          setAuthFlow('login');
+          return true;
+        }
+        if (authFlow === 'reset') {
+          setAuthError('');
+          setAuthFlow('login');
+          return true;
+        }
+        if (authFlow === 'login') {
+          setAuthFlow('language');
+          return true;
+        }
+        return false;
+      }
+
+      // 4. In-App Navigation Back Handling
+      // Sub-screens under Settings
+      if (activeTab === 'privacy' || activeTab === 'terms' || activeTab === 'guidance') {
+        setActiveTab('settings');
+        return true;
+      }
+
+      // Sub-screens under Disaster Relief & Organization Portal
+      if (activeTab === 'orgPortal') {
+        setActiveTab('relief');
+        return true;
+      }
+
+      if (activeTab === 'relief' || activeTab === 'liveRates') {
+        setActiveTab('home');
+        return true;
+      }
+
+      // Settings screen goes back to Home
+      if (activeTab === 'settings') {
+        setActiveTab('home');
+        return true;
+      }
+
+      // Explanation screen goes back to Calculator
+      if (activeTab === 'explanation') {
+        setActiveTab('calculator');
+        return true;
+      }
+
+      // Add payment screen goes back to Tracking
+      if (activeTab === 'addPayment') {
+        setEditingPayment(null);
+        setActiveTab('track');
+        return true;
+      }
+
+      // History sub-screens
+      if (activeTab === 'history') {
+        if (historyView === 'detail' || historyView === 'records') {
+          setHistoryView('list');
+          setSelectedYear(null);
+          setSelectedCycle(null);
+          return true;
+        }
+        setActiveTab('home');
+        return true;
+      }
+
+      // Other bottom tabs (Calculator, Track, Assistant) go back to Home
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+        return true;
+      }
+
+      // On Home screen, return false to let default app exit / OS behavior occur
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => backHandler.remove();
+  }, [authFlow, activeTab, historyView, customAlert.visible, reportModalVisible]);
+
   const handleLogin = async (emailValue, passwordValue) => {
     const trimmedEmail = emailValue?.trim();
     const trimmedPassword = passwordValue?.trim();
@@ -174,6 +272,11 @@ function MainAppContent() {
           setCurrentUser(result.user);
           await saveUserData(result.user);
         }
+        setActiveTab('home');
+        setHistoryView('list');
+        setSelectedYear(null);
+        setSelectedCycle(null);
+        setEditingPayment(null);
         setAuthFlow('app');
       }
     } catch (error) {
@@ -265,6 +368,11 @@ function MainAppContent() {
           setCurrentUser(result.user);
           await saveUserData(result.user);
         }
+        setActiveTab('home');
+        setHistoryView('list');
+        setSelectedYear(null);
+        setSelectedCycle(null);
+        setEditingPayment(null);
         setAuthFlow('app');
         setPendingEmail('');
         showAlert(
@@ -511,6 +619,11 @@ function MainAppContent() {
           await clearAuthStorage();
           setAuthToken(null);
           setCurrentUser(null);
+          setActiveTab('home');
+          setHistoryView('list');
+          setSelectedYear(null);
+          setSelectedCycle(null);
+          setEditingPayment(null);
           setAuthFlow('login');
         }}
         onOpenPrivacy={() => setActiveTab('privacy')}

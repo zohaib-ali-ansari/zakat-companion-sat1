@@ -14,6 +14,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Image,
 } from 'react-native';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -74,9 +75,11 @@ export const LoginScreen = ({ onLoginSuccess, onNavigateSignUp, onNavigateForgot
         
         {/* Top Header Card */}
         <View style={styles.headerBox}>
-          <View style={[styles.iconCircle, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
-            <Ionicons name="lock-closed" size={32} color={themeColors.primary} />
-          </View>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={[styles.title, { color: themeColors.textPrimary }]}>Welcome Back</Text>
           <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>Sign in to continue</Text>
         </View>
@@ -181,16 +184,12 @@ const styles = StyleSheet.create({
   },
   headerBox: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  iconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
+  logoImage: {
+    width: '100%',
+    height: 165,
+    marginBottom: 12,
   },
   title: {
     fontSize: 28,

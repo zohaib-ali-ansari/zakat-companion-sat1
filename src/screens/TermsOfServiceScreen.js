@@ -20,33 +20,33 @@ export const TermsOfServiceScreen = ({ onBack }) => {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[styles.card, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
           <Text style={[styles.sectionHeading, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {isRTL ? '۱. استعمال کی شرائط' : '1. Terms of Usage'}
+            {isRTL ? '۱. استعمال کی شرائط اور سروس اکاؤنٹ' : '1. Terms of Usage & Account Responsibilities'}
           </Text>
           <Text style={[styles.bodyText, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {isRTL
-              ? 'زکوٰۃ کمپینین کو ڈاؤن لوڈ اور استعمال کر کے، آپ زکوٰۃ کے شرعی واجبات کی رہنمائی اور حساب کتاب کے لیے اس ایپلیکیشن کے استعمال سے اتفاق کرتے ہیں۔'
-              : 'By downloading and using Zakat Companion, you agree to use the app for personal calculation and guidance of Islamic Zakat duties.'}
+              ? 'زکوٰۃ کمپینین کو استعمال کر کے آپ اپنے اکاؤنٹ کی سیکیورٹی، درست اثاثہ جات کی معلومات کے اندراج اور زکوٰۃ کے شرعی واجبات کی انجام دہی کے لیے اس پلیٹ فارم کے استعمال سے اتفاق کرتے ہیں۔'
+              : 'By using Zakat Companion, you agree to maintain the security of your account credentials, provide accurate asset details for calculation, and utilize the application for lawful Islamic Zakat compliance.'}
           </Text>
 
           <Text style={[styles.sectionHeading, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {isRTL ? '۲. مالیاتی اور شرعی وضاحتی نوٹ' : '2. Financial Disclaimer'}
+            {isRTL ? '۲. مالیاتی اور شرعی وضاحتی نوٹ' : '2. Financial & Shariah Guidance Disclaimer'}
           </Text>
           <Text style={[styles.bodyText, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {isRTL
-              ? 'زکوٰۃ کمپینین معیارِ نصاب اور مروجہ فقہی اصولوں کے مطابق حساب کتاب سہولت فراہم کرتا ہے۔ کسی بھی پیچیدہ فقہی مسئلے کے لیے جید علماء کرام سے رجوع کریں۔'
-              : 'Zakat Companion provides calculation utilities based on standard Islamic jurisprudence and silver/gold Nisab rates. For complex scholarly disputes or corporate wealth, consult a qualified Islamic scholar.'}
+              ? 'زکوٰۃ کمپینین مروجہ فقہی اصولوں اور لائیو مارکیٹ نصاب کی بنیاد پر خودکار حساب کتاب فراہم کرتا ہے۔ کسی بھی مخصوص یا پیچیدہ شرعی مسئلے کے لیے مستند مفتیانِ کرام اور علماء سے رہنمائی لیں۔'
+              : 'Zakat Companion delivers automated calculation utilities adhering to recognized Shariah principles and real-time metal Nisab benchmarks. For unique commercial portfolios or scholarly rulings, consult certified Islamic scholars.'}
           </Text>
 
           <Text style={[styles.sectionHeading, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {isRTL ? '۳. اپ ڈیٹس اور ترمیمات' : '3. Updates & Modifications'}
+            {isRTL ? '۳. کلاؤڈ سروسز اور ڈیٹا ہم آہنگی (Syncing)' : '3. Cloud Services & Real-Time Sync'}
           </Text>
           <Text style={[styles.bodyText, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
             {isRTL
-              ? 'ہم نصاب کی لائیو قیمتوں اور خصوصیات میں بہتری اور درستگی کے لیے باقاعدگی سے اپ ڈیٹس فراہم کرنے کا حق رکھتے ہیں۔'
-              : 'We reserve the right to update live Nisab threshold rates and currency conversion tools to ensure accuracy for users worldwide.'}
+              ? 'ہم سروس کے بلاتعطل تسلسل، بیک اپ سسٹمز، لائیو میٹل ریٹس کی فراہمی اور کلاؤڈ ڈیٹا بیس سنکرونائزیشن کی مسلسل بہتری کے لیے سروسز کو اپ ڈیٹ کرنے کا حق رکھتے ہیں۔'
+              : 'We reserve the right to deploy updates, enhance multi-device cloud synchronization, and update live market Nisab feeds to ensure seamless calculation accuracy.'}
           </Text>
         </View>
       </ScrollView>
