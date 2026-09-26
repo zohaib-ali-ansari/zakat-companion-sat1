@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -14,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components/Header';
+import { CustomAlertModal } from '../components/CustomAlertModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 
@@ -38,6 +38,45 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
     refreshData,
   } = useZakat();
 
+  // Custom Alert Modal State
+  const [customAlert, setCustomAlert] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    cancelText: null,
+    onConfirm: null,
+    onCancel: null,
+  });
+
+  const showAlert = ({
+    title,
+    message,
+    type = 'info',
+    confirmText = 'OK',
+    cancelText = null,
+    onConfirm = null,
+    onCancel = null,
+  }) => {
+    setCustomAlert({
+      visible: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      onConfirm: () => {
+        setCustomAlert((prev) => ({ ...prev, visible: false }));
+        onConfirm?.();
+      },
+      onCancel: () => {
+        setCustomAlert((prev) => ({ ...prev, visible: false }));
+        onCancel?.();
+      },
+    });
+  };
+
   // Edit Total Modal State
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [newTotalInput, setNewTotalInput] = useState('');
@@ -50,7 +89,12 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
   const handleSaveNewTotal = () => {
     const val = parseFloat(newTotalInput);
     if (!val || val <= 0) {
-      Alert.alert(t('appTitle'), 'Please enter a valid positive amount.');
+      showAlert({
+        title: t('appTitle') || 'Zakat Companion',
+        message: t('invalidAmountMsg') || 'Please enter a valid positive amount.',
+        type: 'warning',
+        confirmText: 'OK',
+      });
       return;
     }
     updateTrackingTotal(val);
@@ -58,37 +102,30 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
   };
 
   const handleCompleteAndArchive = () => {
-    Alert.alert(
-      'Zakat Completed! 🎉',
-      'Would you like to save this complete cycle into your Zakat History?',
-      [
-        { text: t('cancelBtn'), style: 'cancel' },
-        {
-          text: 'Archive to History',
-          onPress: () => {
-            completeAndArchiveCycle();
-            if (onNavigateHistory) {
-              onNavigateHistory();
-            }
-          },
-        },
-      ]
-    );
+    showAlert({
+      title: t('zakatCompletedTitle') || 'Zakat Completed!',
+      message: t('archiveCycleConfirmMsg') || 'Would you like to save this complete cycle into your Zakat History?',
+      type: 'success',
+      confirmText: t('archiveToHistoryBtn') || 'Archive to History',
+      cancelText: t('cancelBtn') || 'Cancel',
+      onConfirm: async () => {
+        await completeAndArchiveCycle();
+        if (onNavigateHistory) {
+          onNavigateHistory();
+        }
+      },
+    });
   };
 
   const handleDelete = (id) => {
-    Alert.alert(
-      t('appTitle'),
-      t('confirmDeletePayment'),
-      [
-        { text: t('cancelBtn'), style: 'cancel' },
-        {
-          text: t('deletePayment'),
-          style: 'destructive',
-          onPress: () => deletePayment(id),
-        },
-      ]
-    );
+    showAlert({
+      title: t('appTitle') || 'Zakat Companion',
+      message: t('confirmDeletePayment') || 'Are you sure you want to delete this payment record?',
+      type: 'warning',
+      confirmText: t('deletePayment') || 'Delete',
+      cancelText: t('cancelBtn') || 'Cancel',
+      onConfirm: () => deletePayment(id),
+    });
   };
 
   return (
@@ -104,27 +141,31 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
               {t('trackTitle')}
             </Text>
             <Text style={[styles.subtitle, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
-              Zakat Period {hijriYear}
+              {t('zakatPeriodLabel')} {hijriYear}
             </Text>
           </View>
 
           {/* Completion Banner when remaining === 0 */}
           {isCompleted && (
             <View style={[styles.completionBanner, { backgroundColor: '#DCFCE7', borderColor: '#86EFAC' }]}>
-              <View style={styles.completionHeader}>
+              <View style={[styles.completionHeader, isRTL && styles.rtlRow]}>
                 <Ionicons name="checkmark-circle" size={28} color="#166534" />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.completionTitle}>Alhamdulillah! Zakat Fully Paid</Text>
-                  <Text style={styles.completionSub}>You have fulfilled your total Zakat obligation for this period.</Text>
+                  <Text style={[styles.completionTitle, isRTL && styles.rtlText]}>
+                    {t('completionBannerTitle')}
+                  </Text>
+                  <Text style={[styles.completionSub, isRTL && styles.rtlText]}>
+                    {t('completionBannerSub')}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
-                style={[styles.archiveBtn, { backgroundColor: '#166534' }]}
+                style={[styles.archiveBtn, { backgroundColor: '#166534' }, isRTL && styles.rtlRow]}
                 onPress={handleCompleteAndArchive}
                 activeOpacity={0.85}
               >
                 <Ionicons name="archive-outline" size={18} color="#FFFFFF" />
-                <Text style={styles.archiveBtnText}>Complete & Save to History</Text>
+                <Text style={styles.archiveBtnText}>{t('saveToHistoryBannerBtn')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -148,14 +189,14 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
             {/* Original vs Current tracking row */}
             {originalCalculatedAmount > 0 && originalCalculatedAmount !== totalDue && (
               <View style={[styles.totalRow, isRTL && styles.rtlRow, { marginBottom: 6 }]}>
-                <Text style={[styles.smallLabel, { color: themeColors.textMuted }]}>Original Calculated Amount:</Text>
+                <Text style={[styles.smallLabel, { color: themeColors.textMuted }]}>{t('originalCalculatedLabel')}</Text>
                 <Text style={[styles.smallVal, { color: themeColors.textMuted }]}>{formatCurrency(originalCalculatedAmount)}</Text>
               </View>
             )}
 
             <View style={[styles.totalRow, isRTL && styles.rtlRow]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[styles.totalLabel, { color: themeColors.textPrimary }]}>Current Tracking Target:</Text>
+              <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 6 }, isRTL && styles.rtlRow]}>
+                <Text style={[styles.totalLabel, { color: themeColors.textPrimary }]}>{t('currentTrackingTarget')}</Text>
                 <TouchableOpacity onPress={handleOpenEditModal} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Ionicons name="pencil" size={16} color={themeColors.primary} />
                 </TouchableOpacity>
@@ -204,15 +245,15 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
             {isSyncing ? (
               <View style={styles.emptyContainer}>
                 <Ionicons name="sync-outline" size={28} color={themeColors.primary} />
-                <Text style={[styles.emptyText, { color: themeColors.textSecondary }]}>
-                  Loading tracking data...
+                <Text style={[styles.emptyText, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
+                  {t('loadingTrackingData')}
                 </Text>
               </View>
             ) : records && records.length > 0 ? (
               records.map((item) => (
                 <View
                   key={item.id || item._id}
-                  style={[styles.paymentCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
+                  style={[styles.paymentCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }, isRTL && styles.rtlRow]}
                 >
                   <View style={[styles.paymentIconBox, { backgroundColor: themeColors.primaryLight }]}>
                     <Ionicons name="cash-outline" size={22} color={themeColors.primary} />
@@ -231,7 +272,7 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
                     <Text style={[styles.amountText, { color: themeColors.primary }]} numberOfLines={1}>
                       {formatCurrency(item.amount)}
                     </Text>
-                    <View style={styles.cardActions}>
+                    <View style={[styles.cardActions, isRTL && styles.rtlRow]}>
                       <TouchableOpacity
                         style={[styles.actionBtn, { backgroundColor: themeColors.primaryLight }]}
                         onPress={() => onAddPayment?.(item)}
@@ -253,16 +294,16 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
             ) : (
               <View style={styles.emptyContainer}>
                 <Ionicons name="receipt-outline" size={32} color={themeColors.textMuted} />
-                <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
+                <Text style={[styles.emptyText, { color: themeColors.textMuted }, isRTL && styles.rtlText]}>
                   {t('noPaymentsYet') || 'No Zakat payments recorded yet'}
                 </Text>
                 <TouchableOpacity
-                  style={[styles.retryBtn, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}
+                  style={[styles.retryBtn, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }, isRTL && styles.rtlRow]}
                   onPress={() => refreshData?.()}
                   activeOpacity={0.8}
                 >
                   <Ionicons name="refresh-outline" size={14} color={themeColors.primary} />
-                  <Text style={[styles.retryBtnText, { color: themeColors.primary }]}>Refresh Data</Text>
+                  <Text style={[styles.retryBtnText, { color: themeColors.primary }]}>{t('refreshDataBtn')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -274,13 +315,15 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
       <Modal visible={editModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: themeColors.cardBg }]}>
-            <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>Edit Tracking Total</Text>
-            <Text style={[styles.modalSub, { color: themeColors.textSecondary }]}>
-              Enter your desired Zakat tracking target (Original calculated: {formatCurrency(originalCalculatedAmount)}).
+            <Text style={[styles.modalTitle, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+              {t('editTrackingTargetTitle')}
+            </Text>
+            <Text style={[styles.modalSub, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
+              {t('editTrackingTargetSub')}
             </Text>
 
             <TextInput
-              style={[styles.modalInput, { color: themeColors.textPrimary, borderColor: themeColors.border, backgroundColor: themeColors.background }]}
+              style={[styles.modalInput, { color: themeColors.textPrimary, borderColor: themeColors.border, backgroundColor: themeColors.background }, isRTL && styles.rtlText]}
               keyboardType="numeric"
               value={newTotalInput}
               onChangeText={setNewTotalInput}
@@ -288,23 +331,25 @@ export default function TrackingScreen({ onOpenSettings, onAddPayment, onNavigat
               placeholderTextColor={themeColors.textMuted}
             />
 
-            <View style={styles.modalBtnRow}>
+            <View style={[styles.modalBtnRow, isRTL && styles.rtlRow]}>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: themeColors.cardBgAlt }]}
                 onPress={() => setEditModalVisible(false)}
               >
-                <Text style={[styles.modalBtnText, { color: themeColors.textSecondary }]}>Cancel</Text>
+                <Text style={[styles.modalBtnText, { color: themeColors.textSecondary }]}>{t('cancelBtn')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: themeColors.primary }]}
                 onPress={handleSaveNewTotal}
               >
-                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>Save Target</Text>
+                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>{t('saveTargetBtn')}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+      <CustomAlertModal {...customAlert} />
     </SafeAreaView>
   );
 }

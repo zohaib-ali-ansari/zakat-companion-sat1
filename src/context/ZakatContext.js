@@ -6,6 +6,7 @@ import {
   deletePaymentRecord,
   deleteYearHistoryRecords,
   updateZakatCycle,
+  archiveZakatCycleApi,
   fetchMetalRates,
   saveZakatCalculation,
 } from '../services/zakatApi';
@@ -251,6 +252,9 @@ export const ZakatProvider = ({ children, token, user }) => {
               }))
             );
           }
+          if (Array.isArray(summary.yearlyHistory)) {
+            setCompletedCycles(summary.yearlyHistory);
+          }
         }
       } catch (err) {
         console.log('Backend sync notice (using local state):', err.message);
@@ -362,32 +366,71 @@ export const ZakatProvider = ({ children, token, user }) => {
   };
 
   // ─── Cycle Completion ──────────────────────────────────────────────────────
-  const completeAndArchiveCycle = () => {
+  const completeAndArchiveCycle = async () => {
     const now = new Date();
     const yearStr = String(now.getFullYear());
-    const newCycle = {
+    const formattedCompletedDate = now.toISOString().split('T')[0];
+    const cyclePeriodStr = `${hijriYear || '1447 AH'} (${yearStr})`;
+
+    const cycleSnapshot = {
       id: `cycle-${Date.now()}`,
-      zakatPeriod: `${hijriYear} (${yearStr})`,
+      _id: `cycle-${Date.now()}`,
+      zakatPeriod: cyclePeriodStr,
       year: yearStr,
-      originalCalculatedAmount,
-      trackingTotal: totalDue,
-      totalPaid,
-      completedAt: now.toISOString().split('T')[0],
-      nisabThreshold: liveRates.silverNisabPkr,
+      originalCalculatedAmount: originalCalculatedAmount || totalDue || 0,
+      trackingTotal: totalDue || 0,
+      totalPaid: totalPaid || 0,
+      completedAt: formattedCompletedDate,
+      nisabThreshold: metalRates?.nisab?.silverThreshold || liveRates.silverNisabPkr || 174523,
       isNisabMet: true,
-      assetBreakdown: calculatedResult?.assetBreakdown || {},
-      totalEligibleAssets: calculatedResult?.totalAssets || 0,
-      deductibleDebts: calculatedResult?.liabilities || 0,
-      netZakatableWealth: calculatedResult?.netZakatableWealth || 0,
-      payments: [...records],
+      assetBreakdown: assetsBreakdown
+        ? {
+            goldSilver: (Number(assetsBreakdown.goldVal) || 0) + (Number(assetsBreakdown.silverVal) || 0),
+            cashInBank: (Number(assetsBreakdown.cashHand) || 0) + (Number(assetsBreakdown.bankSavings) || 0),
+            investments: Number(assetsBreakdown.stockVal) || 0,
+          }
+        : calculatedResult?.assetBreakdown || {},
+      totalEligibleAssets: assetsBreakdown?.totalAssets || calculatedResult?.totalAssets || 0,
+      deductibleDebts: assetsBreakdown?.liabilitiesVal || calculatedResult?.liabilities || 0,
+      netZakatableWealth: assetsBreakdown?.netZakatableWealth || calculatedResult?.netZakatableWealth || 0,
+      payments: records.map((r) => ({
+        id: r._id || r.id,
+        _id: r._id || r.id,
+        amount: Number(r.amount) || 0,
+        recipient: r.recipient || 'Beneficiary',
+        date: r.date || formattedCompletedDate,
+        notes: r.notes || '',
+        category: r.category || 'Zakat',
+        status: r.status || 'Paid',
+      })),
     };
-    setCompletedCycles((prev) => [newCycle, ...prev]);
-    // Reset active tracking
+
+    setCompletedCycles((prev) => [cycleSnapshot, ...prev]);
+
+    if (authToken) {
+      try {
+        await archiveZakatCycleApi(
+          {
+            ...cycleSnapshot,
+            initialDue: 0,
+            nextHijriYear: hijriYear,
+            nextNisabDate: nisabDate,
+          },
+          authToken
+        );
+        await refreshData(authToken);
+      } catch (err) {
+        console.warn('Backend archive cycle error:', err.message);
+      }
+    }
+
+    // Reset active tracking for new cycle
     setRecords([]);
     setTotalDue(0);
     setOriginalCalculatedAmount(0);
     setCalculatedResultState(null);
-    return newCycle;
+
+    return cycleSnapshot;
   };
 
   // ─── Payments ──────────────────────────────────────────────────────────────
@@ -427,6 +470,7 @@ export const ZakatProvider = ({ children, token, user }) => {
             prev.map((rec) => (rec.id === tempId ? { ...saved, id: saved._id } : rec))
           );
         }
+        await refreshData(authToken);
       } catch (err) {
         console.warn('Backend add payment sync error:', err.message);
       }
@@ -466,6 +510,7 @@ export const ZakatProvider = ({ children, token, user }) => {
           },
           authToken
         );
+        await refreshData(authToken);
       } catch (err) {
         console.warn('Backend edit payment sync error:', err.message);
       }
@@ -481,6 +526,7 @@ export const ZakatProvider = ({ children, token, user }) => {
     if (authToken && !String(id).startsWith('payment-')) {
       try {
         await deletePaymentRecord(id, authToken);
+        await refreshData(authToken);
       } catch (err) {
         console.warn('Backend delete payment sync error:', err.message);
       }
@@ -509,6 +555,7 @@ export const ZakatProvider = ({ children, token, user }) => {
     if (authToken) {
       try {
         await deleteYearHistoryRecords(targetYear, authToken);
+        await refreshData(authToken);
       } catch (err) {
         console.warn('Backend delete year sync error:', err.message);
       }

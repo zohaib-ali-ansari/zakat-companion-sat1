@@ -149,3 +149,15 @@ export const updateZakatCycle = async (cycleData, token) => {
   if (!response.ok) throw new Error(data.message || 'Failed to update cycle');
   return data.data;
 };
+
+export const archiveZakatCycleApi = async (cycleData, token) => {
+  const response = await fetch(`${api}/payments/cycle/archive`, {
+    method: 'POST',
+    headers: getAuthHeaders(token),
+    body: JSON.stringify(cycleData || {}),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to archive cycle');
+  return data.data;
+};
+

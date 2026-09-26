@@ -1,62 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  Alert,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
-import { useZakat } from '../context/ZakatContext';
 
 export default function OrganizationPortalScreen({ onBack }) {
   const { t, isRTL, themeColors } = useLanguage();
-  const { addCampaign } = useZakat();
-  const insets = useSafeAreaInsets();
-
-  const [title, setTitle] = useState('');
-  const [orgName, setOrgName] = useState('Alkhidmat Foundation');
-  const [category, setCategory] = useState('Disaster Relief');
-  const [goalAmount, setGoalAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const handlePublish = () => {
-    setErrorMessage('');
-    const numericGoal = parseFloat(goalAmount);
-    if (!title.trim() || !orgName.trim() || !numericGoal || numericGoal <= 0) {
-      setErrorMessage(t('fillRequiredFieldsError'));
-      return;
-    }
-
-    const success = addCampaign({
-      title,
-      orgName,
-      category,
-      goalAmount: numericGoal,
-      description,
-    });
-
-    if (success) {
-      Alert.alert(t('appTitle'), t('campaignCreatedSuccess'));
-      onBack?.();
-    }
-  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
 
-      <View style={[styles.topHeader, { paddingTop: 10, paddingBottom: 10 }]}>
+      {/* Top Header */}
+      <View style={[styles.topHeader, isRTL && styles.rtlRow]}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}
           onPress={() => onBack?.()}
           activeOpacity={0.7}
+          accessibilityLabel="Back"
         >
           <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={themeColors.primary} />
         </TouchableOpacity>
@@ -66,88 +33,35 @@ export default function OrganizationPortalScreen({ onBack }) {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.titleSection}>
-          <Text style={[styles.title, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('orgPortalTitle')}
-          </Text>
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
-            {t('orgPortalSub')}
+      {/* Coming Soon Body */}
+      <View style={styles.centerContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: themeColors.primaryLight }]}>
+          <Ionicons name="business-outline" size={48} color={themeColors.primary} />
+        </View>
+
+        <View style={[styles.badge, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
+          <Text style={[styles.badgeText, { color: themeColors.primary }]}>
+            {t('comingSoonBadge')}
           </Text>
         </View>
 
-        {errorMessage ? (
-          <View style={[styles.errorBox, { backgroundColor: themeColors.cardBgAlt, borderColor: themeColors.danger }]}>
-            <Ionicons name="alert-circle" size={20} color={themeColors.danger} />
-            <Text style={[styles.errorText, { color: themeColors.danger }]}>{errorMessage}</Text>
-          </View>
-        ) : null}
+        <Text style={[styles.title, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
+          {t('orgPortalTitle')}
+        </Text>
 
-        <View style={styles.formGroup}>
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('campaignTitleLabel')} *
-          </Text>
-          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
-            <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder="e.g. Earthquake Emergency Shelter"
-              placeholderTextColor={themeColors.textMuted}
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
-
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('orgNameLabel')} *
-          </Text>
-          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
-            <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder="e.g. Alkhidmat Foundation"
-              placeholderTextColor={themeColors.textMuted}
-              value={orgName}
-              onChangeText={setOrgName}
-            />
-          </View>
-
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('goalAmountLabel')} *
-          </Text>
-          <View style={[styles.inputWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
-            <TextInput
-              style={[styles.input, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder="e.g. 5000000"
-              placeholderTextColor={themeColors.textMuted}
-              value={goalAmount}
-              onChangeText={setGoalAmount}
-              keyboardType="numeric"
-            />
-          </View>
-
-          <Text style={[styles.inputLabel, { color: themeColors.textPrimary }, isRTL && styles.rtlText]}>
-            {t('descriptionLabel')}
-          </Text>
-          <View style={[styles.inputWrapper, styles.multilineWrapper, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
-            <TextInput
-              style={[styles.input, styles.multilineInput, { color: themeColors.textPrimary }, isRTL && styles.rtlInput]}
-              placeholder="Provide campaign details..."
-              placeholderTextColor={themeColors.textMuted}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-            />
-          </View>
-        </View>
+        <Text style={[styles.description, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
+          {t('comingSoonOrgDesc')}
+        </Text>
 
         <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: themeColors.primary }]}
-          onPress={handlePublish}
+          style={[styles.backCta, { backgroundColor: themeColors.primary }]}
+          onPress={() => onBack?.()}
           activeOpacity={0.85}
         >
-          <Ionicons name="cloud-upload-outline" size={20} color="#FFFFFF" />
-          <Text style={styles.submitButtonText}>{t('publishCampaignBtn')}</Text>
+          <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={18} color="#FFFFFF" />
+          <Text style={styles.backCtaText}>{t('backBtn') || 'Back'}</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -159,8 +73,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
+  rtlRow: { flexDirection: 'row-reverse' },
+  rtlText: { textAlign: 'center' },
   backButton: {
     width: 40,
     height: 40,
@@ -170,89 +86,59 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   topHeaderTitle: {
-    fontSize: 18,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 16,
+  },
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  badge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 12,
     fontWeight: '800',
-  },
-  container: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-  titleSection: {
-    marginTop: 10,
-    marginBottom: 20,
+    letterSpacing: 0.8,
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '800',
+    textAlign: 'center',
   },
-  subtitle: {
+  description: {
     fontSize: 15,
     lineHeight: 22,
-    marginTop: 6,
+    textAlign: 'center',
+    maxWidth: 320,
   },
-  rtlText: {
-    textAlign: 'right',
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 10,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 13,
-    fontWeight: '600',
-    flex: 1,
-  },
-  formGroup: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 6,
-    marginTop: 12,
-  },
-  inputWrapper: {
-    borderRadius: 14,
-    borderWidth: 1.5,
-    paddingHorizontal: 14,
-    height: 52,
-    justifyContent: 'center',
-  },
-  multilineWrapper: {
-    height: 90,
-    paddingVertical: 12,
-  },
-  input: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  multilineInput: {
-    textAlignVertical: 'top',
-  },
-  rtlInput: {
-    textAlign: 'right',
-  },
-  submitButton: {
+  backCta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
-    borderRadius: 28,
     gap: 8,
-    shadowColor: '#1A4FD6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    marginTop: 16,
   },
-  submitButtonText: {
+  backCtaText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const ZakatPayment = require('../models/ZakatPayment');
 const ZakatCycle = require('../models/ZakatCycle');
+const ZakatCalculation = require('../models/ZakatCalculation');
 
 /**
  * Helper to get or create active cycle for user
@@ -32,36 +33,61 @@ const getZakatSummary = async (req, res) => {
 
     const cycle = await getOrCreateActiveCycle(userId);
 
-    // Fetch all user payments
-    const payments = await ZakatPayment.find({ userId }).sort({ date: -1, createdAt: -1 });
+    // 1. Fetch completed/archived cycles from MongoDB
+    const archivedCycles = await ZakatCycle.find({
+      userId,
+      status: { $in: ['completed', 'archived'] },
+    }).sort({ createdAt: -1 });
 
-    const totalPaid = payments.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    // 2. Fetch active payments (for the currently active cycle only)
+    const activePayments = await ZakatPayment.find({
+      userId,
+      cycleId: cycle._id,
+      status: { $ne: 'archived' },
+    }).sort({ date: -1, createdAt: -1 });
+
+    const totalPaid = activePayments.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     const totalDue = Number(cycle.totalDue) || 0;
     const remaining = Math.max(0, totalDue - totalPaid);
     const percentPaid = totalDue <= 0 ? 100 : Math.min(100, Math.round((totalPaid / totalDue) * 100));
 
-    // Grouping by Year
-    const yearMap = {};
-    // Grouping by Recipient
+    // 3. Format completed cycles into yearlyHistory
+    const yearlyHistory = archivedCycles.map((c) => ({
+      id: c._id.toString(),
+      _id: c._id.toString(),
+      year: c.gregorianYear || String(new Date(c.createdAt).getFullYear()),
+      zakatPeriod: c.zakatPeriod || `${c.hijriYear || '1447 AH'} (${c.gregorianYear || '2026'})`,
+      hijriYear: c.hijriYear || '1447 AH',
+      originalCalculatedAmount: c.originalCalculatedAmount || c.totalDue || 0,
+      trackingTotal: c.trackingTotal || c.totalDue || 0,
+      totalPaid: c.totalPaid || (Array.isArray(c.payments) ? c.payments.reduce((s, p) => s + (Number(p.amount) || 0), 0) : 0),
+      completedAt: c.completedAt || (c.createdAt ? c.createdAt.toISOString().split('T')[0] : 'Completed'),
+      nisabThreshold: c.nisabThreshold || 174523,
+      isNisabMet: c.isNisabMet !== undefined ? c.isNisabMet : true,
+      totalEligibleAssets: c.totalEligibleAssets || 0,
+      deductibleDebts: c.deductibleDebts || 0,
+      netZakatableWealth: c.netZakatableWealth || 0,
+      assetBreakdown: c.assetBreakdown || {},
+      payments: Array.isArray(c.payments)
+        ? c.payments.map((p, idx) => ({
+            id: p.id || p._id || `p-${c._id}-${idx}`,
+            _id: p._id || p.id || `p-${c._id}-${idx}`,
+            amount: Number(p.amount) || 0,
+            recipient: p.recipient || 'Beneficiary',
+            date: p.date || c.completedAt || 'Past Record',
+            notes: p.notes || '',
+            category: p.category || 'Zakat',
+            status: p.status || 'Paid',
+          }))
+        : [],
+    }));
+
+    // Recipient breakdown for active cycle
     const recipientMap = {};
-
-    payments.forEach((payment) => {
-      const year = payment.year || (payment.date ? payment.date.substring(0, 4) : 'Other');
-      if (!yearMap[year]) {
-        yearMap[year] = { year, totalAmount: 0, count: 0, records: [] };
-      }
-      yearMap[year].totalAmount += payment.amount;
-      yearMap[year].count += 1;
-      yearMap[year].records.push(payment);
-
-      const rec = payment.recipient || 'Other';
-      if (!recipientMap[rec]) {
-        recipientMap[rec] = 0;
-      }
-      recipientMap[rec] += payment.amount;
+    activePayments.forEach((p) => {
+      const rec = p.recipient || 'Other';
+      recipientMap[rec] = (recipientMap[rec] || 0) + (Number(p.amount) || 0);
     });
-
-    const yearlyHistory = Object.values(yearMap).sort((a, b) => b.year.localeCompare(a.year));
     const recipientBreakdown = Object.entries(recipientMap).map(([recipient, amount]) => ({
       recipient,
       amount,
@@ -79,9 +105,9 @@ const getZakatSummary = async (req, res) => {
         nisabDate: cycle.nisabDate,
         currency: cycle.currency || 'PKR',
         activeCycleId: cycle._id,
-        totalRecordsCount: payments.length,
-        recentPayments: payments.slice(0, 5),
-        records: payments,
+        totalRecordsCount: activePayments.length,
+        recentPayments: activePayments.slice(0, 5),
+        records: activePayments,
         yearlyHistory,
         recipientBreakdown,
       },
@@ -315,15 +341,35 @@ const deleteYearPayments = async (req, res) => {
     const userId = req.user._id;
     const { year } = req.params;
 
-    const result = await ZakatPayment.deleteMany({
-      userId,
-      $or: [{ year: String(year) }, { date: new RegExp(`^${year}`) }],
-    });
+    const isObjectId = mongoose.Types.ObjectId.isValid(year);
+
+    const [cycleResult, paymentResult, calcResult] = await Promise.all([
+      ZakatCycle.deleteMany({
+        userId,
+        $or: [
+          ...(isObjectId ? [{ _id: year }] : []),
+          { gregorianYear: String(year) },
+          { zakatPeriod: new RegExp(year, 'i') },
+        ],
+      }),
+      ZakatPayment.deleteMany({
+        userId,
+        $or: [
+          ...(isObjectId ? [{ cycleId: year }] : []),
+          { year: String(year) },
+          { date: new RegExp(`^${year}`) },
+        ],
+      }),
+      ZakatCalculation.deleteMany({
+        userId,
+        year: String(year),
+      }),
+    ]);
 
     return res.status(200).json({
       success: true,
-      message: `Deleted ${result.deletedCount} payment records for year ${year}`,
-      deletedCount: result.deletedCount,
+      message: `Deleted archived cycle and payment records for year ${year}`,
+      deletedCount: (cycleResult.deletedCount || 0) + (paymentResult.deletedCount || 0),
     });
   } catch (error) {
     console.error('Error deleting year payments:', error);
@@ -378,27 +424,98 @@ const updateCycle = async (req, res) => {
 const archiveCycle = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { nextHijriYear, nextNisabDate, initialDue = 0 } = req.body;
+    const {
+      originalCalculatedAmount,
+      trackingTotal,
+      totalPaid,
+      completedAt = new Date().toISOString().split('T')[0],
+      nisabThreshold,
+      isNisabMet = true,
+      assetBreakdown,
+      totalEligibleAssets,
+      deductibleDebts,
+      netZakatableWealth,
+      payments = [],
+      zakatPeriod,
+      year = new Date().getFullYear().toString(),
+      nextHijriYear = '1447 AH',
+      nextNisabDate = '12 Ramadan 1447',
+      initialDue = 0,
+    } = req.body;
 
-    const activeCycle = await ZakatCycle.findOne({ userId, status: 'active' });
-    if (activeCycle) {
-      activeCycle.status = 'archived';
-      await activeCycle.save();
+    let activeCycle = await ZakatCycle.findOne({ userId, status: 'active' });
+    if (!activeCycle) {
+      activeCycle = new ZakatCycle({
+        userId,
+        status: 'completed',
+      });
     }
 
+    // Capture all payments for this cycle
+    let cyclePayments = Array.isArray(payments) && payments.length > 0 ? payments : [];
+    if (cyclePayments.length === 0) {
+      const dbPayments = await ZakatPayment.find({
+        userId,
+        $or: [{ cycleId: activeCycle._id }, { cycleId: null }, { cycleId: { $exists: false } }],
+      });
+      cyclePayments = dbPayments.map((p) => ({
+        id: p._id.toString(),
+        _id: p._id.toString(),
+        amount: p.amount,
+        recipient: p.recipient,
+        date: p.date,
+        notes: p.notes || '',
+        category: p.category || 'Zakat',
+        status: p.status || 'Paid',
+      }));
+    }
+
+    const calculatedTotalPaid = Number(totalPaid) || cyclePayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+    activeCycle.status = 'completed';
+    activeCycle.gregorianYear = String(year);
+    activeCycle.hijriYear = nextHijriYear;
+    activeCycle.zakatPeriod = zakatPeriod || `${activeCycle.hijriYear || '1447 AH'} (${year})`;
+    activeCycle.originalCalculatedAmount = Number(originalCalculatedAmount) || Number(activeCycle.totalDue) || 0;
+    activeCycle.trackingTotal = Number(trackingTotal) || Number(activeCycle.totalDue) || 0;
+    activeCycle.totalPaid = calculatedTotalPaid;
+    activeCycle.completedAt = completedAt;
+    activeCycle.nisabThreshold = Number(nisabThreshold) || 174523;
+    activeCycle.isNisabMet = isNisabMet !== undefined ? isNisabMet : true;
+    activeCycle.assetBreakdown = assetBreakdown || {};
+    activeCycle.totalEligibleAssets = Number(totalEligibleAssets) || 0;
+    activeCycle.deductibleDebts = Number(deductibleDebts) || 0;
+    activeCycle.netZakatableWealth = Number(netZakatableWealth) || 0;
+    activeCycle.payments = cyclePayments;
+
+    await activeCycle.save();
+
+    // Mark current user payments in DB as attached to this completed cycle and archived
+    await ZakatPayment.updateMany(
+      {
+        userId,
+        $or: [{ cycleId: activeCycle._id }, { cycleId: null }, { cycleId: { $exists: false } }],
+      },
+      { $set: { cycleId: activeCycle._id, status: 'archived' } }
+    );
+
+    // Create a new fresh active cycle for current tracking
     const newCycle = await ZakatCycle.create({
       userId,
-      hijriYear: nextHijriYear || '1446 AH',
-      gregorianYear: (new Date().getFullYear() + 1).toString(),
+      hijriYear: nextHijriYear,
+      gregorianYear: new Date().getFullYear().toString(),
       totalDue: parseFloat(initialDue) || 0,
-      nisabDate: nextNisabDate || '1 Ramadan 1446',
+      nisabDate: nextNisabDate,
       status: 'active',
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Previous Zakat cycle archived and new cycle initiated',
-      data: newCycle,
+      message: 'Zakat cycle archived and permanently saved in database history',
+      data: {
+        archivedCycle: activeCycle,
+        newCycle,
+      },
     });
   } catch (error) {
     console.error('Error archiving cycle:', error);

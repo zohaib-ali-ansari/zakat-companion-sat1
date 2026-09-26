@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, StatusBar } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 import { ReportExportModal } from '../components/ReportExportModal';
+import { CustomAlertModal } from '../components/CustomAlertModal';
 
 const formatCurrency = (amount) => `PKR ${Number(amount || 0).toLocaleString('en-US')}`;
 
@@ -14,6 +15,43 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
   const insets = useSafeAreaInsets();
 
   const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [customAlert, setCustomAlert] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'warning',
+    confirmText: 'OK',
+    cancelText: null,
+    onConfirm: null,
+    onCancel: null,
+  });
+
+  const showAlert = ({
+    title,
+    message,
+    type = 'warning',
+    confirmText = 'OK',
+    cancelText = null,
+    onConfirm = null,
+    onCancel = null,
+  }) => {
+    setCustomAlert({
+      visible: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      onConfirm: () => {
+        setCustomAlert((prev) => ({ ...prev, visible: false }));
+        onConfirm?.();
+      },
+      onCancel: () => {
+        setCustomAlert((prev) => ({ ...prev, visible: false }));
+        onCancel?.();
+      },
+    });
+  };
 
   const year = String(yearProp || '2024');
 
@@ -45,22 +83,19 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
   const total = payments.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 
   const handleDeleteYear = () => {
-    Alert.alert(
-      t('appTitle'),
-      'Delete this Zakat Period archive?',
-      [
-        { text: t('cancelBtn'), style: 'cancel' },
-        {
-          text: t('deleteYearBtn'),
-          style: 'destructive',
-          onPress: async () => {
-            if (deleteCompletedCycle) deleteCompletedCycle(cycle.id);
-            if (deleteYearHistory) await deleteYearHistory(year);
-            onBack?.();
-          },
-        },
-      ]
-    );
+    showAlert({
+      title: t('appTitle') || 'Zakat Companion',
+      message: t('confirmDeleteArchiveMsg') || 'Delete this Zakat Period archive from your history?',
+      type: 'warning',
+      confirmText: t('deleteArchiveBtn') || 'Delete Archive',
+      cancelText: t('cancelBtn') || 'Cancel',
+      onConfirm: async () => {
+        const targetId = cycle.id || cycle._id || year;
+        if (deleteCompletedCycle) deleteCompletedCycle(targetId);
+        if (deleteYearHistory) await deleteYearHistory(targetId);
+        onBack?.();
+      },
+    });
   };
 
   return (
@@ -77,7 +112,7 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
               <Ionicons name="sparkles-outline" size={14} color={themeColors.primary} />
             </View>
             <Text style={[styles.topTitleText, { color: themeColors.textPrimary }]}>
-              {cycle.zakatPeriod || `Zakat Period ${year}`}
+              {cycle.zakatPeriod || `${t('zakatPeriodLabel')} ${year}`}
             </Text>
           </View>
           <TouchableOpacity onPress={() => setReportModalVisible(true)} activeOpacity={0.7}>
@@ -88,10 +123,14 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Summary Overview Card */}
           <View style={[styles.summaryCard, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
-            <Text style={[styles.summarySub, { color: themeColors.textSecondary }]}>COMPLETED ZAKAT OBLIGATION</Text>
-            <Text style={[styles.summaryTotal, { color: themeColors.primary }]}>{formatCurrency(cycle.totalPaid || total)}</Text>
-            <Text style={[styles.summaryDate, { color: themeColors.textMuted }]}>
-              Completed on: {cycle.completedAt || 'Archived'}
+            <Text style={[styles.summarySub, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
+              {t('completedZakatObligation')}
+            </Text>
+            <Text style={[styles.summaryTotal, { color: themeColors.primary }]}>
+              {formatCurrency(cycle.totalPaid || total)}
+            </Text>
+            <Text style={[styles.summaryDate, { color: themeColors.textMuted }, isRTL && styles.rtlText]}>
+              {t('completedOnLabel')} {cycle.completedAt || t('archivedStatus')}
             </Text>
           </View>
 
@@ -99,34 +138,36 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
           <View style={[styles.snapshotCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
             <View style={[styles.snapshotHeader, isRTL && styles.rtlRow]}>
               <Ionicons name="pie-chart-outline" size={18} color={themeColors.primary} />
-              <Text style={[styles.snapshotTitle, { color: themeColors.textPrimary }]}>Calculation Snapshot</Text>
+              <Text style={[styles.snapshotTitle, { color: themeColors.textPrimary }]}>
+                {t('calculationSnapshotTitle')}
+              </Text>
             </View>
 
             <View style={[styles.rule, { backgroundColor: themeColors.border }]} />
 
             {cycle.originalCalculatedAmount ? (
               <View style={[styles.row, isRTL && styles.rtlRow]}>
-                <Text style={[styles.rowLabel, { color: themeColors.textSecondary }]}>Original Calculated Zakat:</Text>
+                <Text style={[styles.rowLabel, { color: themeColors.textSecondary }]}>{t('originalCalculatedZakat')}</Text>
                 <Text style={[styles.rowVal, { color: themeColors.textPrimary }]}>{formatCurrency(cycle.originalCalculatedAmount)}</Text>
               </View>
             ) : null}
 
             {cycle.totalEligibleAssets ? (
               <View style={[styles.row, isRTL && styles.rtlRow]}>
-                <Text style={[styles.rowLabel, { color: themeColors.textSecondary }]}>Total Gross Assets:</Text>
+                <Text style={[styles.rowLabel, { color: themeColors.textSecondary }]}>{t('totalGrossAssets')}</Text>
                 <Text style={[styles.rowVal, { color: themeColors.textPrimary }]}>{formatCurrency(cycle.totalEligibleAssets)}</Text>
               </View>
             ) : null}
 
             {cycle.netZakatableWealth ? (
               <View style={[styles.row, isRTL && styles.rtlRow]}>
-                <Text style={[styles.rowLabel, { color: themeColors.textSecondary }]}>Net Zakatable Wealth:</Text>
+                <Text style={[styles.rowLabel, { color: themeColors.textSecondary }]}>{t('netZakatableWealthLabel')}</Text>
                 <Text style={[styles.rowVal, { color: themeColors.textPrimary }]}>{formatCurrency(cycle.netZakatableWealth)}</Text>
               </View>
             ) : null}
 
             <View style={[styles.row, isRTL && styles.rtlRow]}>
-              <Text style={[styles.rowLabel, { color: themeColors.primary, fontWeight: '700' }]}>Total Zakat Paid:</Text>
+              <Text style={[styles.rowLabel, { color: themeColors.primary, fontWeight: '700' }]}>{t('totalZakatPaid')}</Text>
               <Text style={[styles.rowVal, { color: themeColors.primary, fontWeight: '800' }]}>{formatCurrency(total)}</Text>
             </View>
           </View>
@@ -134,8 +175,10 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
           {/* Payment Transactions Table Card */}
           <View style={[styles.tableCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
             <View style={[styles.tableHeading, isRTL && styles.rtlRow]}>
-              <Text style={[styles.tableTitle, { color: themeColors.textPrimary }]}>Payment Records</Text>
-              <Text style={[styles.tableBadge, { color: themeColors.primary }]}>{payments.length} Payments</Text>
+              <Text style={[styles.tableTitle, { color: themeColors.textPrimary }]}>{t('paymentRecordsTitle')}</Text>
+              <Text style={[styles.tableBadge, { color: themeColors.primary }]}>
+                {payments.length} {payments.length === 1 ? t('transactionSingle') : t('transactionPlural')}
+              </Text>
             </View>
 
             <View style={[styles.rule, { backgroundColor: themeColors.border }]} />
@@ -160,7 +203,9 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
                 </View>
               ))
             ) : (
-              <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>No individual records.</Text>
+              <Text style={[styles.emptyText, { color: themeColors.textMuted }, isRTL && styles.rtlText]}>
+                {t('noIndividualRecords')}
+              </Text>
             )}
           </View>
 
@@ -181,7 +226,7 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
               activeOpacity={0.85}
             >
               <Ionicons name="trash-outline" size={18} color={themeColors.danger} />
-              <Text style={[styles.deleteYearText, { color: themeColors.danger }]}>Delete Archive</Text>
+              <Text style={[styles.deleteYearText, { color: themeColors.danger }]}>{t('deleteArchiveBtn')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -193,6 +238,8 @@ export default function HistoryYearDetailScreen({ year: yearProp, cycle: cyclePr
         year={year}
         cycle={cycle}
       />
+
+      <CustomAlertModal {...customAlert} />
     </SafeAreaView>
   );
 }

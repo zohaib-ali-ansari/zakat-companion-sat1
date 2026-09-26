@@ -21,8 +21,6 @@ export const ProfileSettingsScreen = ({
   const { t, language, setLanguage, isDarkMode, toggleDarkMode, themeColors, isRTL } = useLanguage();
   const { currentUser } = useZakat();
 
-  const [pushNotifications, setPushNotifications] = React.useState(true);
-  const [zakatReminders, setZakatReminders] = React.useState(true);
   const [avatarIndex, setAvatarIndex] = React.useState(currentUser?.avatar ?? 0);
 
   const avatars = ['wallet', 'person', 'star', 'sparkles'];
@@ -108,29 +106,6 @@ export const ProfileSettingsScreen = ({
             type="switch"
             value={isDarkMode}
             onValueChange={toggleDarkMode}
-          />
-        </View>
-
-        {/* NOTIFICATIONS */}
-        <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textSecondary }, isRTL && styles.rtlText]}>
-            {t('sectionNotifications')}
-          </Text>
-
-          <SettingRow
-            icon="notifications-outline"
-            title={t('settingPushNotifications')}
-            type="switch"
-            value={pushNotifications}
-            onValueChange={setPushNotifications}
-          />
-
-          <SettingRow
-            icon="alarm-outline"
-            title={t('settingZakatReminders')}
-            type="switch"
-            value={zakatReminders}
-            onValueChange={setZakatReminders}
           />
         </View>
 
