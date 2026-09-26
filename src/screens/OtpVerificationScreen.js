@@ -13,6 +13,7 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -107,14 +108,11 @@ export const OtpVerificationScreen = ({
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.headerBox}>
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder },
-                ]}
-              >
-                <Ionicons name="shield-checkmark-outline" size={34} color={themeColors.primary} />
-              </View>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
               <Text style={[styles.title, { color: themeColors.textPrimary }]}>{screenTitle}</Text>
               <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
                 {screenSubtitle}{'\n'}
@@ -204,16 +202,12 @@ const styles = StyleSheet.create({
   },
   headerBox: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 20,
   },
-  iconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
+  logoImage: {
+    width: '100%',
+    height: 165,
+    marginBottom: 12,
   },
   title: {
     fontSize: 28,

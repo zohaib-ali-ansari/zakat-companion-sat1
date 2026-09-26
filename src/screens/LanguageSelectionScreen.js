@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/LanguageContext';
 import { translations } from '../i18n/translations';
@@ -27,10 +27,12 @@ export const LanguageSelectionScreen = ({ onContinue }) => {
       <StatusBar barStyle="dark-content" backgroundColor={themeColors.background} />
       <View style={styles.content}>
         
-        {/* App Logo/Icon */}
-        <View style={[styles.logoWrapper, { backgroundColor: themeColors.primaryLight, borderColor: themeColors.primaryBorder }]}>
-          <Ionicons name="sparkles" size={32} color={themeColors.primary} />
-        </View>
+        {/* App Logo */}
+        <Image
+          source={require('../../assets/logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
 
         <Text style={[styles.title, { color: themeColors.textPrimary }]}>{dict.selectLanguageTitle}</Text>
         <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>{dict.selectLanguageSubtitle}</Text>
@@ -117,13 +119,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoImage: {
+    width: 190,
+    height: 115,
     marginBottom: 24,
   },
   title: {
