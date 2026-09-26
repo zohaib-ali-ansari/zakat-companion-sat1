@@ -18,14 +18,19 @@ import { Header } from '../components/Header';
 import { useLanguage } from '../context/LanguageContext';
 import { useZakat } from '../context/ZakatContext';
 
-const GOLDPRICE_BASE_URL = 'https://api.goldprice.dev/v1';
-const FX_BASE_URL = 'https://open.er-api.com/v6/latest/USD';
+const PAKISTAN_RATES_URL = 'https://goldrateinpakistan.org/api/rates.json';
+
+const SILVER_PURITIES = [999, 925];
+
+const SILVER_PURITY_FACTORS = {
+  999: 0.999,
+  925: 0.925,
+};
 
 const PRICE_CACHE_KEY = '@zakat_price_cache_v1';
 const CALC_HISTORY_KEY = '@zakat_calculation_history_v1';
 const NISAB_PREFERENCE_KEY = '@zakat_nisab_preference_v1';
 
-const TROY_OUNCE_GRAMS = 31.1034768;
 const TOLA_GRAMS = 11.6638125;
 const MASHA_TO_TOLA = 1 / 12;
 const GOLD_NISAB_TOLA = 7.5;
@@ -34,30 +39,6 @@ const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 const GOLD_KARATS = [24, 22, 21, 18];
 const UNITS = ['tola', 'gram', 'masha'];
-
-const GOLD_PURITY_FACTORS = {
-  24: 1,
-  22: 22 / 24,
-  21: 21 / 24,
-  18: 18 / 24,
-};
-
-const getPublicApiKey = () => {
-  try {
-    return process.env.EXPO_PUBLIC_GOLDPRICE_API_KEY || '';
-  } catch (error) {
-    return '';
-  }
-};
-
-const API_KEY = getPublicApiKey();
-
-const getHeaders = () => {
-  if (!API_KEY) return {};
-  return {
-    Authorization: `Bearer ${API_KEY}`,
-  };
-};
 
 const sleepableFetch = async (url, options = {}, timeoutMs = 15000) => {
   const controller = new AbortController();
@@ -95,24 +76,6 @@ const sleepableFetch = async (url, options = {}, timeoutMs = 15000) => {
     throw error;
   } finally {
     clearTimeout(timer);
-  }
-};
-
-// goldprice.dev also serves this endpoint anonymously. If a configured key is
-// rejected (401/403), or the request fails before any HTTP response (on web this
-// is usually a CORS preflight failure caused by the Authorization header),
-// retry without the key. A header-less GET is a "simple" request: no preflight.
-const fetchGoldSpot = async () => {
-  const url = `${GOLDPRICE_BASE_URL}/prices?symbol=XAU-USD-SPOT`;
-  try {
-    return await sleepableFetch(url, { headers: getHeaders() });
-  } catch (error) {
-    const authRejected = error?.status === 401 || error?.status === 403;
-    const noHttpResponse = error?.status === undefined;
-    if (API_KEY && (authRejected || noHttpResponse)) {
-      return sleepableFetch(url);
-    }
-    throw error;
   }
 };
 
@@ -183,19 +146,25 @@ const getDefaultGoldItem = () => ({
 
 const getDefaultSilverItem = () => ({
   id: `${Date.now()}-silver`,
+  mode: 'weight',
   unit: 'tola',
-  weight: '1',
-  priceMode: 'manual',
+  purity: 999,
+  weight: '',
+  directValue: '',
+  priceMode: 'auto',
   manualRate: '',
-  purity: 'pure',
 });
 
 const getDefaultPriceState = () => ({
-  goldSpotUsdOz: null,
-  usdPkr: null,
-  goldComputedAt: null,
-  fxUpdatedAt: null,
-  goldApiStale: false,
+  goldRates: {
+    24: null,
+    22: null,
+    21: null,
+    18: null,
+  },
+  silverRatePerTola: null,
+  silverRatePerGram: null,
+  updatedAt: null,
   source: 'none',
   fetchedAt: null,
 });
@@ -232,7 +201,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
 
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [nisabBasis, setNisabBasis] = useState('silver');
-  const [nisabPriceMode, setNisabPriceMode] = useState('manual');
+  const [nisabPriceMode, setNisabPriceMode] = useState('auto');
   // Separate manual rate per basis so a silver rate is never reused for gold.
   const [nisabManualRates, setNisabManualRates] = useState({ silver: '', gold: '' });
   const nisabManualRate = nisabManualRates[nisabBasis];
@@ -251,21 +220,19 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
     { key: 'liabilities', labelKey: 'catLiabilities', icon: 'card-outline' },
   ];
 
-  const liveGold24kPerGram = useMemo(() => {
-    if (!Number.isFinite(priceState.goldSpotUsdOz) || !Number.isFinite(priceState.usdPkr)) {
+  const getGoldLiveRatePerTola = (karat) => {
+    const rate = priceState.goldRates?.[karat];
+    return Number.isFinite(rate) ? rate : null;
+  };
+
+  const getSilverLiveRatePerTola = (purity = 999) => {
+    if (!Number.isFinite(priceState.silverRatePerTola)) {
       return null;
     }
-    return (priceState.goldSpotUsdOz / TROY_OUNCE_GRAMS) * priceState.usdPkr;
-  }, [priceState.goldSpotUsdOz, priceState.usdPkr]);
 
-  const liveGoldRatePerTola = useMemo(() => {
-    if (!Number.isFinite(liveGold24kPerGram)) return null;
-    return liveGold24kPerGram * TOLA_GRAMS;
-  }, [liveGold24kPerGram]);
+    const purityFactor = SILVER_PURITY_FACTORS[purity] || 1;
 
-  const getGoldLiveRatePerTola = (karat) => {
-    if (!Number.isFinite(liveGoldRatePerTola)) return null;
-    return liveGoldRatePerTola * (GOLD_PURITY_FACTORS[karat] || 1);
+    return priceState.silverRatePerTola * purityFactor;
   };
 
   const isOlderThan24Hours = (timestamp) => {
@@ -283,12 +250,16 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
   };
 
   const getCurrentSilverRate = (item) => {
-    const manual = normalizePositive(item.manualRate);
-    return manual || null;
+    if (item.priceMode === 'manual') {
+      const manual = normalizePositive(item.manualRate);
+      return manual || null;
+    }
+
+    return getSilverLiveRatePerTola(item.purity);
   };
 
-  const goldRateStatus = priceState.goldComputedAt
-    ? isOlderThan24Hours(priceState.goldComputedAt) || priceState.goldApiStale
+  const goldRateStatus = priceState.updatedAt
+    ? isOlderThan24Hours(priceState.updatedAt)
     : true;
 
   const toggleCategory = (catKey) => {
@@ -349,7 +320,16 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
       if (!cached) return null;
 
       const parsed = JSON.parse(cached);
-      if (!parsed?.goldSpotUsdOz || !parsed?.usdPkr) return null;
+
+      if (
+        !parsed?.goldRates?.[24] ||
+        !parsed?.goldRates?.[22] ||
+        !parsed?.goldRates?.[21] ||
+        !parsed?.goldRates?.[18] ||
+        !parsed?.silverRatePerTola
+      ) {
+        return null;
+      }
 
       return parsed;
     } catch (error) {
@@ -370,49 +350,50 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
     setPriceError('');
 
     try {
-      const [goldResult, fxResult] = await Promise.allSettled([
-        fetchGoldSpot(),
-        sleepableFetch(FX_BASE_URL),
-      ]);
+      const response = await sleepableFetch(PAKISTAN_RATES_URL);
 
-      const goldResponse = goldResult.status === 'fulfilled' ? goldResult.value : null;
-      const fxResponse = fxResult.status === 'fulfilled' ? fxResult.value : null;
+      const gold = response?.gold;
+      const silver = response?.silver;
 
-      if (goldResult.status === 'rejected' || fxResult.status === 'rejected') {
-        const reasons = [
-          goldResult.status === 'rejected' && `Gold: ${goldResult.reason?.message}`,
-          fxResult.status === 'rejected' && `FX: ${fxResult.reason?.message}`,
-        ]
-          .filter(Boolean)
-          .join(' | ');
-        throw new Error(reasons);
-      }
-
-      const goldRow = goldResponse?.symbols?.[0];
-      const usdPkr = Number(fxResponse?.rates?.PKR);
-
-      if (!goldRow?.price || !Number.isFinite(usdPkr)) {
-        throw new Error('Price response was incomplete.');
+      if (!gold || !silver) {
+        throw new Error('Gold and silver price data was incomplete.');
       }
 
       const snapshot = {
-        goldSpotUsdOz: Number(goldRow.price),
-        usdPkr,
-        goldComputedAt: goldRow.computed_at || new Date().toISOString(),
-        fxUpdatedAt: fxResponse?.time_last_update_utc
-          ? new Date(fxResponse.time_last_update_utc).toISOString()
-          : new Date().toISOString(),
-        goldApiStale: Boolean(goldRow.is_stale),
+        goldRates: {
+          24: normalizePositive(gold['24k']?.per_tola),
+          22: normalizePositive(gold['22k']?.per_tola),
+          21: normalizePositive(gold['21k']?.per_tola),
+          18: normalizePositive(gold['18k']?.per_tola),
+        },
+
+        silverRatePerTola: normalizePositive(silver?.per_tola),
+        silverRatePerGram: normalizePositive(silver?.per_gram),
+
+        updatedAt: response?.updated_at || new Date().toISOString(),
         source: 'live',
         fetchedAt: new Date().toISOString(),
       };
 
+      if (
+        !snapshot.goldRates[24] ||
+        !snapshot.goldRates[22] ||
+        !snapshot.goldRates[21] ||
+        !snapshot.goldRates[18] ||
+        !snapshot.silverRatePerTola
+      ) {
+        throw new Error('One or more metal rates were unavailable.');
+      }
+
       setPriceState(snapshot);
       setHasEverFetched(true);
+
       await saveCachedPrices(snapshot);
     } catch (error) {
-      // Handled below (cache fallback), so log quietly instead of triggering the red error screen.
-      if (__DEV__) console.log('Price API fetch failed:', error?.message);
+      if (__DEV__) {
+        console.log('Pakistan metal rates fetch failed:', error?.message);
+      }
+
       const reason = error?.message ? ` (${error.message})` : '';
       const cached = await readCachedPrices();
 
@@ -420,9 +401,10 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
         setPriceState({
           ...cached,
           source: 'cached',
-          fetchedAt: cached.fetchedAt || null,
         });
+
         setHasEverFetched(true);
+
         setPriceError(
           ui(
             `Live pricing is unavailable. Using the last saved price.${reason}`,
@@ -432,10 +414,11 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
       } else {
         setPriceState(getDefaultPriceState());
         setHasEverFetched(false);
+
         setPriceError(
           ui(
-            `Could not fetch prices. Try again, or switch items to Manual.${reason}`,
-            `قیمتیں حاصل نہیں ہو سکیں۔ دوبارہ کوشش کریں یا آئٹمز کو Manual کریں۔${reason}`
+            `Could not fetch Pakistan gold and silver rates. Try again or switch to Manual.${reason}`,
+            `پاکستانی سونے اور چاندی کے ریٹس حاصل نہیں ہو سکے۔ دوبارہ کوشش کریں یا Manual منتخب کریں۔${reason}`
           )
         );
       }
@@ -449,7 +432,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
       const savedNisab = await AsyncStorage.getItem(NISAB_PREFERENCE_KEY);
       if (savedNisab === 'gold' || savedNisab === 'silver') {
         setNisabBasis(savedNisab);
-        setNisabPriceMode(savedNisab === 'gold' ? 'auto' : 'manual');
+        setNisabPriceMode('auto');
       }
 
       const cached = await readCachedPrices();
@@ -500,8 +483,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
     nisabBasis,
     nisabPriceMode,
     nisabManualRates,
-    priceState.goldSpotUsdOz,
-    priceState.usdPkr,
+    priceState.updatedAt,
   ]);
 
   const goldCalculations = useMemo(() => {
@@ -531,16 +513,31 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
         tola,
       };
     });
-  }, [goldItems, liveGoldRatePerTola]);
+  }, [goldItems, priceState.goldRates]);
 
   const silverCalculations = useMemo(() => {
     return silverItems.map((item) => {
-      const activeWeight = normalizePositive(item.weight) || 1;
-      const tola = getWeightInTola(activeWeight, item.unit || 'tola');
+      if (item.mode === 'value') {
+        return {
+          id: item.id,
+          value: normalizePositive(item.directValue),
+          blocked: false,
+          rate: null,
+          tola: null,
+        };
+      }
+
+      const tola = getWeightInTola(item.weight, item.unit || 'tola');
       const rate = getCurrentSilverRate(item);
 
       if (!tola) {
-        return { id: item.id, value: 0, blocked: false, rate, tola };
+        return {
+          id: item.id,
+          value: 0,
+          blocked: false,
+          rate,
+          tola,
+        };
       }
 
       return {
@@ -551,7 +548,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
         tola,
       };
     });
-  }, [silverItems]);
+  }, [silverItems, priceState.silverRatePerTola]);
 
   // Only weight-mode gold items need a rate; "I already know the value" items do not.
   const autoPricingNeedsGold =
@@ -565,10 +562,15 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
     );
 
   const getNisabRate = () => {
-    if (nisabBasis === 'silver' || nisabPriceMode === 'manual') {
+    if (nisabPriceMode === 'manual') {
       return normalizePositive(nisabManualRate);
     }
-    return liveGoldRatePerTola || 0;
+
+    if (nisabBasis === 'silver') {
+      return getSilverLiveRatePerTola(999) || 0;
+    }
+
+    return getGoldLiveRatePerTola(24) || 0;
   };
 
   const getNisabThreshold = () => {
@@ -625,8 +627,8 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
       Alert.alert(
         t('appTitle'),
         ui(
-          'Nisab price is missing. Enter a rate per tola, or use the live gold price.',
-          'نصاب کی قیمت موجود نہیں۔ فی تولہ ریٹ درج کریں یا لائیو سونے کی قیمت استعمال کریں۔'
+          'Nisab price is missing. Enter a rate per tola, or use the live rate.',
+          'نصاب کی قیمت موجود نہیں۔ فی تولہ ریٹ درج کریں یا لائیو قیمت استعمال کریں۔'
         )
       );
       return;
@@ -976,8 +978,8 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
                   ]}
                 >
                   {priceState.source === 'cached'
-                    ? `${ui('Cached', 'محفوظ')} • ${formatAge(priceState.goldComputedAt)}`
-                    : `${ui('Live', 'لائیو')} • ${formatAge(priceState.goldComputedAt)}`}
+                    ? `${ui('Cached', 'محفوظ')} • ${formatAge(priceState.updatedAt)}`
+                    : `${ui('Live', 'لائیو')} • ${formatAge(priceState.updatedAt)}`}
                   {goldRateStatus ? ` • ${ui('stale', 'پرانا ڈیٹا')}` : ''}
                 </Text>
 
@@ -1026,7 +1028,14 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
   };
 
   const renderSilverItem = (item, index) => {
+    const currentRate = getCurrentSilverRate(item);
     const value = silverCalculations[index]?.value || 0;
+
+    const rateUnavailable =
+      item.mode === 'weight' &&
+      item.priceMode === 'auto' &&
+      !currentRate &&
+      normalizePositive(item.weight) > 0;
 
     return (
       <View
@@ -1045,19 +1054,195 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
           () => removeSilverItem(item.id)
         )}
 
-        <View style={styles.manualRateBox}>
-          {renderLabel(
-            ui('Your silver rate per tola', 'آپ کا چاندی کا ریٹ فی تولہ')
+        {renderLabel(ui('Entry type', 'اندراج کی قسم'))}
+
+        <View style={[styles.optionRow, isRTL && styles.rtlRow]}>
+          {renderChip(
+            'silver-weight',
+            item.mode === 'weight',
+            ui('Weight', 'وزن'),
+            () => updateSilverItem(item.id, { mode: 'weight' })
           )}
-          {renderInput(item.manualRate, (manualRate) =>
-            updateSilverItem(item.id, { manualRate })
+
+          {renderChip(
+            'silver-value',
+            item.mode === 'value',
+            ui('I already know the value', 'مجھے قیمت معلوم ہے'),
+            () => updateSilverItem(item.id, { mode: 'value' })
           )}
         </View>
 
-        {silverCalculations[index]?.tola > 0 && (
-          <Text style={[styles.calculatedPreview, { color: themeColors.primary }]}>
-            {ui('Calculated value', 'حساب شدہ قیمت')}: PKR {formatPKR(value)}
-          </Text>
+        {item.mode === 'weight' ? (
+          <>
+            {renderLabel(ui('Unit', 'اکائی'))}
+
+            {renderUnitChips(
+              item.unit,
+              (unit) => updateSilverItem(item.id, { unit })
+            )}
+
+            {renderLabel(ui('Purity', 'خالص پن'))}
+
+            <View style={[styles.optionRow, isRTL && styles.rtlRow]}>
+              {SILVER_PURITIES.map((purity) =>
+                renderChip(
+                  purity,
+                  item.purity === purity,
+                  purity === 999
+                    ? ui('999 Pure', '999 خالص')
+                    : ui('925 Sterling', '925 اسٹرلنگ'),
+                  () =>
+                    updateSilverItem(item.id, {
+                      purity,
+                    })
+                )
+              )}
+            </View>
+
+            {renderLabel(ui('Weight', 'وزن'))}
+
+            {renderInput(
+              item.weight,
+              (weight) => updateSilverItem(item.id, { weight })
+            )}
+          </>
+        ) : (
+          <>
+            {renderLabel(
+              ui(
+                'Silver value in PKR',
+                'چاندی کی قیمت پاکستانی روپے میں'
+              )
+            )}
+
+            {renderInput(
+              item.directValue,
+              (directValue) =>
+                updateSilverItem(item.id, { directValue })
+            )}
+          </>
+        )}
+
+        {item.mode === 'weight' && (
+          <>
+            {renderPriceModeSwitch(item, (priceMode) =>
+              updateSilverItem(item.id, { priceMode })
+            )}
+
+            {item.priceMode === 'auto' ? (
+              <View
+                style={[
+                  styles.readonlyBox,
+                  {
+                    backgroundColor: themeColors.cardBgAlt,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
+                <View style={[styles.priceRow, isRTL && styles.rtlRow]}>
+                  <View style={styles.priceInfo}>
+                    <Text
+                      style={[
+                        styles.smallLabel,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
+                      {ui(
+                        `${item.purity === 999 ? '999 pure' : '925 sterling'} silver live rate per tola`,
+                        `${item.purity === 999 ? '999 خالص' : '925 اسٹرلنگ'} چاندی لائیو ریٹ فی تولہ`
+                      )}
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.liveRate,
+                        { color: themeColors.textPrimary },
+                      ]}
+                    >
+                      {currentRate
+                        ? `PKR ${formatRate(currentRate)}`
+                        : ui('Unavailable', 'دستیاب نہیں')}
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={18}
+                    color={themeColors.textMuted}
+                  />
+                </View>
+
+                <Text
+                  style={[
+                    styles.statusText,
+                    {
+                      color: goldRateStatus
+                        ? themeColors.danger
+                        : themeColors.textSecondary,
+                    },
+                  ]}
+                >
+                  {priceState.source === 'cached'
+                    ? `${ui('Cached', 'محفوظ')} • ${formatAge(priceState.updatedAt)}`
+                    : `${ui('Live', 'لائیو')} • ${formatAge(priceState.updatedAt)}`}
+                  {goldRateStatus ? ` • ${ui('stale', 'پرانا ڈیٹا')}` : ''}
+                </Text>
+
+                <Text
+                  style={[
+                    styles.noteText,
+                    { color: themeColors.textMuted },
+                  ]}
+                >
+                  {ui(
+                    'Live silver rate is based on the pure silver rate returned by the Pakistan rates API.',
+                    'لائیو چاندی کا ریٹ پاکستان ریٹس API کے خالص چاندی کے ریٹ پر مبنی ہے۔'
+                  )}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.manualRateBox}>
+                {renderLabel(
+                  ui(
+                    'Your silver rate per tola',
+                    'آپ کا چاندی کا ریٹ فی تولہ'
+                  )
+                )}
+
+                {renderInput(
+                  item.manualRate,
+                  (manualRate) =>
+                    updateSilverItem(item.id, { manualRate })
+                )}
+              </View>
+            )}
+
+            {rateUnavailable && (
+              <Text
+                style={[
+                  styles.errorText,
+                  { color: themeColors.danger },
+                ]}
+              >
+                {ui(
+                  'No live silver rate available. Retry or switch to Manual.',
+                  'چاندی کا لائیو ریٹ دستیاب نہیں۔ دوبارہ کوشش کریں یا Manual منتخب کریں۔'
+                )}
+              </Text>
+            )}
+
+            {silverCalculations[index]?.tola > 0 && currentRate ? (
+              <Text
+                style={[
+                  styles.calculatedPreview,
+                  { color: themeColors.primary },
+                ]}
+              >
+                {ui('Calculated value', 'حساب شدہ قیمت')}: PKR{' '}
+                {formatPKR(value)}
+              </Text>
+            ) : null}
+          </>
         )}
       </View>
     );
@@ -1109,15 +1294,15 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
               <Text
                 style={[styles.priceHeaderTitle, { color: themeColors.textPrimary }]}
               >
-                {ui('Gold Rates and Manual Silver Rates', 'سونے اور دستی چاندی کے ریٹس')}
+                {ui('Live Gold & Silver Rates', 'لائیو سونے اور چاندی کے ریٹس')}
               </Text>
 
               <Text
                 style={[styles.priceHeaderSub, { color: themeColors.textSecondary }]}
               >
                 {ui(
-                  'Gold uses live spot prices. Enter the silver rate manually.',
-                  'سونے کے لیے لائیو spot قیمتیں استعمال ہوتی ہیں۔ چاندی کا ریٹ دستی طور پر درج کریں۔'
+                  'Gold and silver rates are fetched in PKR from a Pakistan rates API.',
+                  'سونے اور چاندی کے ریٹس پاکستان کے API سے PKR میں حاصل کیے جاتے ہیں۔'
                 )}
               </Text>
             </View>
@@ -1146,17 +1331,25 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
 
           <View style={styles.fxPill}>
             <Ionicons
-              name="swap-horizontal-outline"
+              name="globe-outline"
               size={15}
               color={themeColors.primary}
             />
-            <Text style={[styles.fxText, { color: themeColors.textSecondary }]}>
-              {priceState.usdPkr
-                ? `USD/PKR ${formatRate(priceState.usdPkr)} • ${ui(
-                    `FX updated ${formatAge(priceState.fxUpdatedAt)}`,
-                    `FX اپ ڈیٹ ${formatAge(priceState.fxUpdatedAt)}`
-                  )}`
-                : ui('USD/PKR unavailable', 'USD/PKR دستیاب نہیں')}
+
+            <Text
+              style={[
+                styles.fxText,
+                { color: themeColors.textSecondary },
+              ]}
+            >
+              {priceState.updatedAt
+                ? `${ui(
+                    'Pakistan rates updated',
+                    'پاکستانی ریٹس اپ ڈیٹ'
+                  )} • ${formatAge(priceState.updatedAt)}`
+                : ui(
+                    'Pakistan rates unavailable',
+                    'پاکستانی ریٹس دستیاب نہیں')}
             </Text>
           </View>
 
@@ -1311,8 +1504,8 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
                 ]}
               >
                 {ui(
-                  'Enter the rate for pure silver. Sterling silver is valued at 92.5% of that rate.',
-                  'خالص چاندی کا ریٹ درج کریں۔ اسٹرلنگ چاندی کی قیمت اس ریٹ کے 92.5% پر شمار ہوگی۔'
+                  'Live silver is the pure (999) rate from the API. Sterling (925) is calculated as 92.5% of that rate.',
+                  'لائیو چاندی API کا خالص (999) ریٹ ہے۔ اسٹرلنگ (925) اسی ریٹ کے 92.5% پر شمار ہوتا ہے۔'
                 )}
               </Text>
             </View>
@@ -1381,7 +1574,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
               ui('Silver • 52.5 tola', 'چاندی • 52.5 تولہ'),
               () => {
                 setNisabBasis('silver');
-                setNisabPriceMode('manual');
+                setNisabPriceMode('auto');
               }
             )}
             {renderChip(
@@ -1404,7 +1597,6 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
 
             <Switch
               value={nisabPriceMode === 'auto'}
-              disabled={nisabBasis === 'silver'}
               onValueChange={(value) => setNisabPriceMode(value ? 'auto' : 'manual')}
               trackColor={{
                 false: themeColors.border,
@@ -1424,7 +1616,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
             </Text>
           </View>
 
-          {nisabPriceMode === 'auto' && nisabBasis === 'gold' ? (
+          {nisabPriceMode === 'auto' ? (
             <View
               style={[
                 styles.readonlyBox,
@@ -1437,7 +1629,9 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
               <View style={[styles.priceRow, isRTL && styles.rtlRow]}>
                 <View style={styles.priceInfo}>
                   <Text style={[styles.smallLabel, { color: themeColors.textSecondary }]}>
-                    {ui('24K gold rate per tola', '24K سونے کا ریٹ فی تولہ')}
+                    {nisabBasis === 'silver'
+                      ? ui('Pure silver rate per tola', 'خالص چاندی کا ریٹ فی تولہ')
+                      : ui('24K gold rate per tola', '24K سونے کا ریٹ فی تولہ')}
                   </Text>
                   <Text style={[styles.liveRate, { color: themeColors.textPrimary }]}>
                     {nisabRate
@@ -1463,7 +1657,7 @@ export const CalculatorScreen = ({ onOpenSettings }) => {
                   },
                 ]}
               >
-                {`${ui('Gold', 'سونا')} • ${formatAge(priceState.goldComputedAt)}`}
+                {`${nisabBasis === 'silver' ? ui('Silver', 'چاندی') : ui('Gold', 'سونا')} • ${formatAge(priceState.updatedAt)}`}
               </Text>
             </View>
           ) : (
